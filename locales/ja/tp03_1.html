@@ -1,0 +1,34 @@
+<script type="text/x-red" data-help-name="Tibbit-03_1 out">
+    <p>#03_1 Two low-power relays (configuration 1)</p>
+    <p>Two mechanical low-power relays with independent normally opened terminals.</p>
+    <p>See <a href="http://tibbo.com/store/tps/tibbits.html#?filter=%2303_1">Details</a></p>
+
+    <h3>Details</h3>
+    <p><code>line</code>は制御するLineを指定<br>(A、Bを指定します)</p>
+    <p><code>v</code>はLOWのON・OFFを指定<br>(1:ON、0:OFF)</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+    <dt>payload
+        <span class="property-type">json</span>
+    </dt>
+    <dd>
+        example:<br>
+        <p>
+            ・LineAのLOWをOFFさせる<br>
+            <code>[{"line":"A", "v": 0}]</code><br>
+        </p>
+        <p>
+            ・LineAのLOWをONさせる<br>
+            <code>[{"line":"A", "v": 1}]</code><br>
+        </p>
+        <p>
+            ・LineBのLOWをOFFさせる<br>
+            <code>[{"line":"B", "v": 0}]</code><br>
+        </p>
+        <p>
+            ・LineBのLOWをONさせる<br>
+            <code>[{"line":"B", "v": 1}]</code><br>
+        </p>
+    </dd>
+</script>

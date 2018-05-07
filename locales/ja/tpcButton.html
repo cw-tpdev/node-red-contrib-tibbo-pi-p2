@@ -1,0 +1,33 @@
+<script type="text/x-red" data-help-name="tp-button in">
+    <p>Tibbo-Piのボタンで、押下されたボタンの情報を送信します<br>
+
+    <h3>Details</h3>
+    <p><code>btn</code>は押下されたボタン<br>(1~2を示します)</p>
+    <p><code>v</code>はボタンのPUSH・RELEASEの状態<br>(1:PUSH、0:RELEASE)</p>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+    <dt>payload
+        <span class="property-type">JSON</span>
+    </dt>
+    <dd>
+        example:<br>
+        <p>
+            ・ボタン1がPUSHされた<br>
+            <code>{btn: 1, v: 1}</code><br>
+        </p>
+        <p>
+            ・ボタン1がRELEASEされた<br>
+            <code>{btn: 1, v: 0}</code><br>
+        </p>
+        <p>
+            ・ボタン2がPUSHされた<br>
+            <code>{btn: 2, v: 1}</code><br>
+        </p>
+        <p>
+            ・ボタン2がRELEASEされた<br>
+            <code>{btn: 2, v: 0}</code><br>
+        </p>
+    </dd>
+    </dl>
+</script>

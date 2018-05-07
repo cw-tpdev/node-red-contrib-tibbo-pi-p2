@@ -1,0 +1,35 @@
+﻿{
+  "name": "node-red-contrib-tibbo-pi-p2",
+  "node-red": {
+    "nodes": {
+      "tpInitialize": "tpInitialize.js",
+      "tp00_3": "tp00_3.js",
+      "tp01": "tp01.js",
+      "tp03_1": "tp03_1.js",
+      "tp04_1": "tp04_1.js",
+      "tp28": "tp28.js",
+      "tp29": "tp29.js",
+      "tp30": "tp30.js",
+      "tp38": "tp38.js",
+      "tp39": "tp39.js",
+      "tp42": "tp42.js",
+      "tpcBuzzer": "tpcBuzzer.js",
+      "tpcLed": "tpcLed.js",
+      "tpcButton": "tpcButton.js"
+    }
+  },
+  "version": "0.1.0",
+  "description": "Node-RED nodes for Tibbo-Pi",
+  "main": "tpInitialize.js",
+  "scripts": {},
+  "keywords": [
+    "node-red",
+    "Tibbo-Pi"
+  ],
+  "author": {
+    "name": "CO-works",
+    "email": "tp-dev@co-works.co.jp",
+    "url": "https://co-works.co.jp/"
+  },
+  "license": "Apache-2.0"
+}
