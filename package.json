@@ -18,7 +18,7 @@
       "tpcButton": "tpcButton.js"
     }
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Node-RED nodes for Tibbo-Pi",
   "main": "tpInitialize.js",
   "scripts": {},
@@ -30,6 +30,10 @@
     "name": "CO-works",
     "email": "tp-dev@co-works.co.jp",
     "url": "https://co-works.co.jp/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cw-tpdev/node-red-contrib-tibbo-pi-p2"
   },
   "license": "Apache-2.0"
 }

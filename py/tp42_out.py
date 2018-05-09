@@ -93,6 +93,7 @@ class Tp42_out:
         return send
         '''
 
+    # TODO sendにする。
     def get_data(self, msg):
         """
         ミリ秒（テキスト）をSPI通信フォーマットに変換

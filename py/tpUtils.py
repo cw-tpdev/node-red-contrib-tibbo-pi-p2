@@ -57,7 +57,6 @@ def hex_z_fill(num):
     1 -> 0x01
     """
 
-    # もっと良い書き方があるかも
     tmp = str(hex(num))
     if(len(tmp) == 3):
         # 0埋め

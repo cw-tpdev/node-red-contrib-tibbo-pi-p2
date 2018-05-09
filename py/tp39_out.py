@@ -23,9 +23,9 @@ class Tp39_out:
         self.tp00_3 = Tp00_3(self.slot, self.comm, self.host)
         self.tp00_3.start()
 
-    def get_data(self, data):
+    def send(self, data):
         """
-        値を取得します。
+        値を送信します。
         """
         # on/offは反転
         if tpUtils.to_num(data) == 0:
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     while True:
         try:
             data = input()
-            tp39_out.get_data(data)
+            tp39_out.send(data)
             # 戻り値なし
         except KeyboardInterrupt:
             sys.exit(0)
