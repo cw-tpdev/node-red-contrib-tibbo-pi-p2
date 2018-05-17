@@ -1,5 +1,5 @@
 import sys
-from tp00_3 import Tp00_3
+from tp00 import Tp00
 import tpUtils
 from constant import *
 import json
@@ -22,9 +22,9 @@ class Tp29:
         # アドレス
         self.i2c_addr = 0x18
 
-        # tp00_3
-        self.tp00_3 = Tp00_3(self.slot, self.comm, self.host)
-        self.tp00_3.start()
+        # tp00
+        self.tp00 = Tp00(self.slot, self.comm, self.host)
+        self.tp00.start()
 
     def get_data(self):
         """
@@ -33,13 +33,11 @@ class Tp29:
         send_data = []
         send_data.append(
             {"act": "r", "add": self.i2c_addr, "cmd": 0x05, "len": 2})
-        _result = self.tp00_3.send(json.dumps(send_data))
+        _result = self.tp00.send(json.dumps(send_data))
 
         # jsonで受け取る
         result_data = json.loads(_result.decode())
         result = result_data[0]
-
-        # TODO Tp30の温度と同じかチェックする
 
         # 値の取得
         val = (result[0] & 0x0F) * 16 + result[1] / 16

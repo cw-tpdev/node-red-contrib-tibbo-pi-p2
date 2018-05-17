@@ -23,7 +23,6 @@ class Tp42:
     def start(self):
         """
         開始処理
-        TCPサーバーに接続します。
         """
         self.tcp_client = TcpClient()
         self.tcp_client.connect_by_conf(self.host, self.slot, self.comm)
@@ -37,104 +36,82 @@ class Tp42:
 
     def get_data(self):
         """
-        ミリ秒（テキスト）をSPI通信フォーマットに変換
-        [
-        {"add" : "0x06", "v" : [0x00]},
-        {"add" : "0x05", "v" : [0x00]},
-        {"add" : "0x04", "v" : [0x00]},
-        {"add" : "0x02", "v" : [0x00]},
-        {"add" : "0x01", "v" : [0x00]},
-        {"add" : "0x00", "v" : [0x00]}
-        ]
+        日付を取得
         """
-
-        READ = 0x00
-        ADDR_YEAR = 0x06
-        ADDR_MONTH = 0x05
-        ADDR_DAY = 0x04
-        ADDR_HOUR = 0x02
-        ADDR_MINUTE = 0x01
-        ADDR_SEC = 0x00
-
-        #msg = msg.replace('"','')
 
         send_data = []
-        # 年
-        addr = ADDR_YEAR | READ
-        send_data.append({"add": addr, "v": [0x00]})
-        # 月
-        addr = ADDR_MONTH | READ
-        send_data.append({"add": addr, "v": [0x00]})
-        # 日
-        addr = ADDR_DAY | READ
-        send_data.append({"add": addr, "v": [0x00]})
-        # 時
-        addr = ADDR_HOUR | READ
-        send_data.append({"add": addr, "v": [0x00]})
-        # 分
-        addr = ADDR_MINUTE | READ
-        send_data.append({"add": addr, "v": [0x00]})
-        # 秒
-        addr = ADDR_SEC | READ
-        send_data.append({"add": addr, "v": [0x00]})
+
+        READ = 0x00
+        vals = [0] * 7
+        send_data.append({"add": READ, "v": vals})
 
         recv = self.send(json.dumps(send_data))
-        return self.convert(recv)
+        return self.__convert(recv)
 
-        '''
-        send = '['
-        # 年 
-        addr = ADDR_YEAR | READ
-        send += '{"add" : "%s", "v" : [0x00]}' % (tpUtils.hex_z_fill(addr)) + ','
-        # 月 
-        addr = ADDR_MONTH | READ
-        send += '{"add" : "%s", "v" : [0x00]}' % (tpUtils.hex_z_fill(addr)) + ','
-        # 日 
-        addr = ADDR_DAY | READ
-        send += '{"add" : "%s", "v" : [0x00]}' % (tpUtils.hex_z_fill(addr)) + ','
-        # 時 
-        addr = ADDR_HOUR | READ
-        send += '{"add" : "%s", "v" : [0x00]}' % (tpUtils.hex_z_fill(addr)) + ','
-        # 分 
-        addr = ADDR_MINUTE | READ
-        send += '{"add" : "%s", "v" : [0x00]}' % (tpUtils.hex_z_fill(addr)) + ','
-        # 秒 
-        addr = ADDR_SEC | READ
-        send += '{"add" : "%s", "v" : [0x00]}' % (tpUtils.hex_z_fill(addr)) + ','
-
-        send += ']'
-        '''
-
-        '''
-        #print(send)
-        return recv
-        '''
-
-    def convert(self, msg):
+    def __convert(self, msg):
         """
-        RTCから取得した値を返却値に変更
+        日付に変換
         """
 
-        # TODO 取得した値を部分的にマスクする必要があるかも
-        buff = json.loads(msg)
+        buff = json.loads(msg.decode())
 
         # 年
-        year = 2000+tpUtils.bcd_to_dec(buff[0][0])
+        year = 2000 + tpUtils.bcd_to_dec(buff[0][6])
         # 月
-        month = tpUtils.bcd_to_dec(buff[1][0])
+        month = tpUtils.bcd_to_dec(buff[0][5])
         # 日
-        day = tpUtils.bcd_to_dec(buff[2][0])
+        day = tpUtils.bcd_to_dec(buff[0][4])
         # 時
-        hour = tpUtils.bcd_to_dec(buff[3][0])
+        hour = tpUtils.bcd_to_dec(buff[0][2])
         # 分
-        minute = tpUtils.bcd_to_dec(buff[4][0])
+        minute = tpUtils.bcd_to_dec(buff[0][1])
         # 秒
-        sec = tpUtils.bcd_to_dec(buff[5][0])
+        sec = tpUtils.bcd_to_dec(buff[0][0])
 
         dt = datetime(year, month, day, hour, minute, sec)
+        return dt.strftime("%Y/%m/%d %H:%M:%S")
 
-        # print(str(dt))
-        return str(dt)
+    def send_data(self, msg):
+        """
+        日付をセット
+        """
+
+        # check
+        try:
+            datetime.strptime(msg, '%Y/%m/%d %H:%M:%S')
+        except ValueError:
+            raise ValueError(
+                "Incorrect data format, should be yyyy-MM-dd HH:mm:ss - " + msg)
+
+        send_data = []
+
+        vals = []
+        # 秒
+        vals.append(tpUtils.dec_to_bcd(int(msg[17:19])))
+        # 分
+        vals.append(tpUtils.dec_to_bcd(int(msg[14:16])))
+        # 時
+        vals.append(tpUtils.dec_to_bcd(int(msg[11:13])))
+
+        WRITE = 0x80
+        send_data.append({"add": WRITE, "v": vals})
+
+        vals = []
+        # 日
+        vals.append(tpUtils.dec_to_bcd(int(msg[8:10])))
+        # 月
+        vals.append(tpUtils.dec_to_bcd(int(msg[5:7])))
+        # 年
+        vals.append(tpUtils.dec_to_bcd(int(msg[2:4])))
+
+        WRITE = 0x84
+        send_data.append({"add": WRITE, "v": vals})
+
+        # send
+        self.send(json.dumps(send_data))
+
+        # SET
+        return "SET: " + msg
 
 
 if __name__ == '__main__':
@@ -150,7 +127,6 @@ if __name__ == '__main__':
         if (len(argvs) > 2):
             host = argvs[2]
         tp42 = Tp42(slot, host)
-
         tp42.start()
     except Exception as e:
         tpUtils.stderr(str(e.args))
@@ -159,7 +135,13 @@ if __name__ == '__main__':
     while True:
         try:
             data = input()
-            recv = tp42.get_data()
+            tmp = json.loads(data)
+            if (tpUtils.to_num(tmp['ctrl']) == 1):
+                recv = tp42.get_data()
+            elif (tpUtils.to_num(tmp['ctrl']) == 2):
+                recv = tp42.send_data(tmp['v'])
+            else:
+                raise ValueError("Incorrect data")
             tpUtils.nodeOut(recv)
         except KeyboardInterrupt:
             sys.exit(0)

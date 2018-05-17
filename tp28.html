@@ -1,5 +1,5 @@
 <script type="text/javascript">
-    RED.nodes.registerType('Tibbit-28', {
+    RED.nodes.registerType('Tibbit-#28', {
         category: 'Tibbo‐Pi',
         color: '#FF9E68',
         defaults: {
@@ -12,14 +12,16 @@
         },
         inputs: 1,
         outputs: 1,
-        icon: "file.png",
+        icon: "tbpi-icon.png",
         label: function () {
-            return this.name || "Tibbit 28";
+            var slot = this.tpSlot? " [" + this.tpSlot + "]": "";
+            var rtn = this.name || "Tibbit #28";
+            return rtn + slot;
         }
     });
 </script>
 
-<script type="text/x-red" data-template-name="Tibbit-28">
+<script type="text/x-red" data-template-name="Tibbit-#28">
     <div class="form-row">
         <label for="node-input-name"><i class="icon-tag"></i> <span data-i18n="common.name"></span></label>
         <input type="text" id="node-input-name" placeholder="Name">

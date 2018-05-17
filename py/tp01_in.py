@@ -22,7 +22,6 @@ class Tp01_in:
     def start(self, callback_recv):
         """
         開始処理
-        TCPサーバーに接続します。
         """
         self.tcp_client = TcpClient(callback_recv)
         self.tcp_client.connect_by_conf_recv(self.host, self.slot, self.comm)
@@ -32,12 +31,6 @@ class Tp01_in:
         データ受信待ち
         """
         self.tcp_client.recv()
-
-    def handler(self, func, *args):
-        """
-        ハンドラー
-        """
-        return func(*args)
 
 
 def recv_event(recv_data):
@@ -73,4 +66,3 @@ if __name__ == '__main__':
         tp01_in.wait_for_recv()
     except KeyboardInterrupt:
         sys.exit(0)
-

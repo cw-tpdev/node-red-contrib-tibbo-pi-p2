@@ -1,7 +1,7 @@
 import time
 import json
 from constant import *
-#from tpBoardInterface import TpBoardInterface
+from tpBoardInterface import TpBoardInterface
 import tpUtils
 
 
@@ -25,7 +25,7 @@ class TpControl:
         self.callback_send = callback_send
 
         # 基板用インターフェース準備
-        #self.tp_inter = TpBoardInterface(settings, self.__send_data)
+        self.tp_inter = TpBoardInterface(settings, self.__send_data)
 
     def control(self, setting, rcv_msg):
         """
@@ -48,7 +48,7 @@ class TpControl:
             pattern = data['ptn']
 
             # ブザーの制御を行う
-            #self.tp_inter.rp_buzzer(time, pattern)
+            self.tp_inter.rp_buzzer(time, pattern)
 
             # 戻り値は無し
             return
@@ -67,7 +67,7 @@ class TpControl:
             val = data['v']
 
             # LEDの制御を行う
-            #self.tp_inter.rp_led(no, val)
+            self.tp_inter.rp_led(no, val)
 
             # 戻り値は無し
             return
@@ -100,6 +100,10 @@ class TpControl:
                     line) - 1]['status']
                 if status == 'IN':
                     read_data = self.tp_inter.gpio_read(setting['slot'], line)
+                    # 戻り値
+                    rtn.append(read_data)
+                elif status == 'IN_Analog':
+                    read_data = self.tp_inter.analog_read(setting['slot'], line)
                     # 戻り値
                     rtn.append(read_data)
                 elif status == 'OUT':
@@ -166,11 +170,13 @@ class TpControl:
 
                 # アドレス
                 address = data['add']
-                # 値
-                val = data['v']
 
-                # TODO SPIの処理を行う。SPIの場合は必ず戻り値がある
-                rtn_data = [0x02]
+                # value
+                vals = data['v']
+
+                # SPIの処理を行う。SPIの場合は必ず戻り値がある
+                rtn_data = self.tp_inter.spi_access(
+                        setting['slot'], address, vals)
 
                 # 戻り値
                 rtn.append(rtn_data)
@@ -183,7 +189,9 @@ class TpControl:
             # Serial
             #--------------
 
-            # TODO rcv_msg(多分bytes型)をそのまま使う
+            # Serial送信の処理を行う。
+            rtn_data = self.tp_inter.serial_write(
+                        setting['slot'], rcv_msg)
 
             # 戻り値は無し
             return

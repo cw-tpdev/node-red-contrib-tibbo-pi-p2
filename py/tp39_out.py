@@ -1,6 +1,6 @@
 
 import sys
-from tp00_3 import Tp00_3
+from tp00 import Tp00
 import json
 from constant import *
 import tpUtils
@@ -19,9 +19,9 @@ class Tp39_out:
         self.comm = GPIO
         self.host = host
 
-        # tp00_3経由にて通信
-        self.tp00_3 = Tp00_3(self.slot, self.comm, self.host)
-        self.tp00_3.start()
+        # tp00経由にて通信
+        self.tp00 = Tp00(self.slot, self.comm, self.host)
+        self.tp00.start()
 
     def send(self, data):
         """
@@ -38,9 +38,9 @@ class Tp39_out:
         tmp_data["v"] = val
         send_data.append(tmp_data)
 
-        # tp00_3経由
+        # tp00経由
         # Node-REDへは返却しない
-        self.tp00_3.send(json.dumps(send_data))
+        self.tp00.send(json.dumps(send_data))
 
 
 if __name__ == '__main__':

@@ -3,6 +3,7 @@ from lib.tcpClient import TcpClient
 import tpUtils
 import sys
 from constant import *
+import json
 
 
 class Tp01:
@@ -21,7 +22,6 @@ class Tp01:
     def start(self):
         """
         開始処理
-        TCPサーバーに接続します。
         """
         self.tcp_client = TcpClient()
         self.tcp_client.connect_by_conf(self.host, self.slot, self.comm)
@@ -54,8 +54,10 @@ if __name__ == '__main__':
 
     while True:
         try:
+            # {"type":"Buffer","data":[110,117]}
             data = input()
-            recv_data = tp01.send(data)
+            obf_data = json.loads(data)
+            recv_data = tp01.send(bytearray(obf_data['data']))
             tpUtils.nodeOut(recv_data.decode('utf-8'))
         except KeyboardInterrupt:
             sys.exit(0)

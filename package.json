@@ -3,22 +3,28 @@
   "node-red": {
     "nodes": {
       "tpInitialize": "tpInitialize.js",
-      "tp00_3": "tp00_3.js",
+      "tp00": "tp00.js",
       "tp01": "tp01.js",
-      "tp03_1": "tp03_1.js",
-      "tp04_1": "tp04_1.js",
+      "tp03": "tp03.js",
+      "tp04": "tp04.js",
+      "tp11": "tp11.js",
+      "tp15": "tp15.js",
       "tp28": "tp28.js",
       "tp29": "tp29.js",
       "tp30": "tp30.js",
       "tp38": "tp38.js",
       "tp39": "tp39.js",
       "tp42": "tp42.js",
+      "tp54": "tp54.js",
+      "tp58": "tp58.js",
+      "tp59": "tp59.js",
       "tpcBuzzer": "tpcBuzzer.js",
       "tpcLed": "tpcLed.js",
-      "tpcButton": "tpcButton.js"
+      "tpcButton": "tpcButton.js",
+      "tpConfigSerial": "tpConfigSerial.js"
     }
   },
-  "version": "0.1.1",
+  "version": "0.9.0",
   "description": "Node-RED nodes for Tibbo-Pi",
   "main": "tpInitialize.js",
   "scripts": {},

@@ -1,7 +1,7 @@
 module.exports = function (RED) {
     "use strict";
 
-    // RTC and NVRAM with backup #42
+    // #42 RTC and NVRAM with backup 
 
     var TpCommon = require('./tpCommon');
 
@@ -16,7 +16,7 @@ module.exports = function (RED) {
         var tc = new TpCommon("tp42", node);
 
         // Launch python
-        tc.execPy([config.tpSlot]);
+        tc.execPy([config.tpSlot, config.host]);
 
         // On Node Input
         tc.onInput(function (msg) {
@@ -33,31 +33,7 @@ module.exports = function (RED) {
         });
 
     }
-    RED.nodes.registerType("Tibbit-42", TP_42Node);
+    RED.nodes.registerType("Tibbit-#42", TP_42Node);
 
-    function TP_42_OutNode(config) {
-        RED.nodes.createNode(this, config);
-
-        // config
-        var node = this;
-        this.config = config;
-
-        // common
-        var tc = new TpCommon("tp42_out", node);
-
-        // Launch python
-        tc.execPy([config.tpSlot, config.host]);
-
-        // On Node Input
-        tc.onInput(function (msg) {
-
-            return msg.payload;
-        });
-
-        // On Node Output
-        tc.onOutput();
-
-    }
-    RED.nodes.registerType("Tibbit-42 out", TP_42_OutNode);
 }
 

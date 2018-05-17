@@ -1,6 +1,6 @@
 
 import sys
-from tp00_3 import Tp00_3
+from tp00 import Tp00
 import tpUtils
 from constant import *
 import json
@@ -24,9 +24,9 @@ class Tp28:
         # アドレス
         self.i2c_addr = 0x23
 
-        # tp00_3
-        self.tp00_3 = Tp00_3(self.slot, self.comm, self.host)
-        self.tp00_3.start()
+        # tp00
+        self.tp00 = Tp00(self.slot, self.comm, self.host)
+        self.tp00.start()
 
     def get_data(self):
         """
@@ -42,7 +42,7 @@ class Tp28:
         # Low-Res
         send_data.append(
             {"act": "w", "add": self.i2c_addr, "cmd": 0x00, "v": [0x13]})
-        self.tp00_3.send(json.dumps(send_data))
+        self.tp00.send(json.dumps(send_data))
 
         # wait
         time.sleep(0.02)
@@ -51,13 +51,11 @@ class Tp28:
         send_data = []
         send_data.append(
             {"act": "r", "add": self.i2c_addr, "cmd": 0x00, "len": 2})
-        _result = self.tp00_3.send(json.dumps(send_data))
+        _result = self.tp00.send(json.dumps(send_data))
 
         # jsonで受け取る
         result_data = json.loads(_result.decode())
         result = result_data[0]
-
-        # TODO iphoneの照度計と値が合っているかチェックしたい。
 
         # 値の取得
         val = (result[0] * 256 + result[1]) / 1.2
@@ -66,7 +64,7 @@ class Tp28:
         # Power Down
         send_data.append(
             {"act": "w", "add": self.i2c_addr, "cmd": 0x00, "v": [0x00]})
-        self.tp00_3.send(json.dumps(send_data))
+        self.tp00.send(json.dumps(send_data))
 
         # 小数点第一位まで取得
         return round(val, 1)

@@ -22,7 +22,6 @@ class TpcButton:
     def start(self, callback_recv):
         """
         開始処理
-        TCPサーバーに接続します。
         """
         self.tcp_client = TcpClient(callback_recv)
         self.tcp_client.connect_by_conf_recv(self.host, self.slot, self.comm)

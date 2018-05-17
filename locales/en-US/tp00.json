@@ -1,0 +1,40 @@
+﻿{
+	"tp00": {
+		"label": {
+			"serial": "serial",
+			"communication": "Method",
+			"pin": "Pin",
+			"lineA": "LineA",
+			"lineB": "LineB",
+			"lineC": "LineC",
+			"lineD": "LineD",
+			"settings": "Settings",
+			"speed": "Speed",
+			"mode": "Mode",
+			"endian": "Endian",
+			"bigEndian": "Big Endian",
+			"littleEndian": "Little Endian",
+			"unused": "none",
+			"pinTipsGpio": "IN_Analog can be used in slot S01 to S08.",
+			"pinTips": "Available lines depend on Tibbit."
+		}
+	},
+	"common": {
+		"name": "Name",
+		"tpSlot": "Slot",
+		"status": {
+			"connected": "TP Connected",
+			"tryConnecting": "TP Connecting...",
+			"disconnected": "TP Disconnected",
+			"disabled": "Disabled"
+		},
+        "other": "Other",
+        "host": "Host",
+        "connectedStatus": "Status",
+        "connectedStatusPtn": {
+            "start": "Connecting",
+            "stop": "Do not connect",
+            "disabled": "Disabled"
+        }
+	}
+}

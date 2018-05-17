@@ -33,7 +33,7 @@ module.exports = function (RED) {
         });
 
     }
-    RED.nodes.registerType("Tibbit-01", TP_01Node);
+    RED.nodes.registerType("Tibbit-#01", TP_01Node);
 
     function TP_01_InNode(config) {
         RED.nodes.createNode(this, config);
@@ -51,11 +51,11 @@ module.exports = function (RED) {
         // On Node Output
         tc.onOutput(function (msg, payload) {
 
-            msg.payload = payload;
+            msg.payload = Buffer.from(JSON.parse(payload));
             node.send(msg);
 
         });
     }
-    RED.nodes.registerType("Tibbit-01 in", TP_01_InNode);
+    RED.nodes.registerType("Tibbit-#01 in", TP_01_InNode);
 }
 

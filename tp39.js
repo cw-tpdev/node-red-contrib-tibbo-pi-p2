@@ -28,5 +28,5 @@ module.exports = function (RED) {
         tc.onOutput();
 
     }
-    RED.nodes.registerType("Tibbit-39 out", TP_39_OutNode);
+    RED.nodes.registerType("Tibbit-#39 out", TP_39_OutNode);
 }

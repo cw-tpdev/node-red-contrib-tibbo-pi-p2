@@ -51,20 +51,6 @@ def bcd_to_dec(bcd):
     return high * 10 + low
 
 
-def hex_z_fill(num):
-    """
-    1バイトの数値をゼロ埋めして16進数の文字列に変換します。
-    1 -> 0x01
-    """
-
-    tmp = str(hex(num))
-    if(len(tmp) == 3):
-        # 0埋め
-        tmp = tmp[0:2] + '0'+tmp[2:]
-
-    return tmp
-
-
 def slot_int_to_str(slot_int):
     """
     slot番号をslot文字列に変更します。

@@ -24,9 +24,6 @@ var TpCommon = function (name, node) {
 // pyフォルダ
 TpCommon.prototype.dirPy = __dirname + '/py/';
 
-// python command
-TpCommon.prototype.cmdPy = 'python';
-
 // ノードへのアウトプット文字列
 TpCommon.prototype.stdoutNodeStr = '[TP NODE OP]';
 
@@ -34,6 +31,13 @@ TpCommon.prototype.stdoutNodeStr = '[TP NODE OP]';
 TpCommon.prototype.getPyPath = function (name) {
 
     return this.dirPy + name + '.py';
+};
+
+// python command
+TpCommon.prototype.cmdPy = function (args) {
+
+    var isWin = require('os').platform().indexOf('win') > -1;
+    return isWin ? 'python' : 'python3';
 };
 
 // spawnを取得
@@ -51,7 +55,10 @@ TpCommon.prototype.execPy = function (args) {
     if (status != 'stop' && status != 'disabled') {
 
         // 起動
-        this._node.child = spawn(this.cmdPy, ["-u", this.getPyPath(this._name)].concat(args));
+        this._node.child = spawn(this.cmdPy(), ["-u", this.getPyPath(this._name)].concat(args));
+        this._node.child.on('error', function (err) {
+            inst._node.error("python fail: " + err);
+        });
 
         // Python実行中のエラー出力
         this._node.child.stderr.on('data', function (data) {
@@ -106,7 +113,7 @@ TpCommon.prototype.onInput = function (func) {
             return
         }
 
-        // msgをキューに格納
+        // msgを格納
         inst._msg = msg;
 
         var sendData = func(msg);

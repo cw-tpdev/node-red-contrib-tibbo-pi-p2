@@ -1,5 +1,5 @@
 import sys
-from tp00_3_in import Tp00_3_in
+from tp00_in import Tp00_in
 import tpUtils
 from constant import *
 import json
@@ -18,9 +18,9 @@ class Tp38_in:
         self.comm = GPIO
         self.host = host
 
-        # tp00_3_in
-        self.tp00_3_in = Tp00_3_in(self.slot, self.comm, self.host)
-        self.tp00_3_in.start(self.recv_event)
+        # tp00_in
+        self.tp00_in = Tp00_in(self.slot, self.comm, self.host)
+        self.tp00_in.start(self.recv_event)
 
     def start(self, callback_recv):
         """
@@ -28,7 +28,7 @@ class Tp38_in:
         """
         self.callback_recv = callback_recv
         # 受信待ち
-        self.tp00_3_in.wait_for_recv()
+        self.tp00_in.wait_for_recv()
 
     def recv_event(self, recv_data):
         """

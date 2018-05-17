@@ -27,6 +27,6 @@ module.exports = function (RED) {
         });
 
     }
-    RED.nodes.registerType("Tibbit-38 in", TP_38_InNode);
+    RED.nodes.registerType("Tibbit-#38 in", TP_38_InNode);
 }
 

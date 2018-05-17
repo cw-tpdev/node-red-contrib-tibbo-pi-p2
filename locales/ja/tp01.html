@@ -1,11 +1,43 @@
-<script type="text/x-red" data-help-name="Tibbit-01">
-    <p>#01 Four-line RS232 port</p>
-    <p>Simple RS232 port with only TX, RX, RTS, and CTS lines.</p>
-    <p>See <a href="http://tibbo.com/store/tps/tibbits.html#?filter=%2301">Details</a></p>
+<script type="text/x-red" data-help-name="Tibbit-#01">
+    <p>#01 RS232トランシーバ</p>
+
+    <h3>Details</h3>
+    <p>TX、RX、RTS、およびCTSラインのみのシンプルなRS232ポート。</p>
+    <p>参照：<a href="http://tibbo.com/store/tps/tibbits.html#?filter=%2301">Tibbit Blocks</a></p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">buffer object</span>
+        </dt>
+        <dd>
+            <p>e.g.</p><pre>Buffer.from([0x00]);</pre>
+            <p>※機器へのOUTを入力</p>
+        </dd>
+    </dl>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dd>
+            none
+            <p>※機器からのINは「Tibbit-#01 in」で取得</p>
+        </dd>
+    </dl>
 </script>
 
-<script type="text/x-red" data-help-name="Tibbit-01 in">
-    <p>#01 Four-line RS232 port</p>
-    <p>Simple RS232 port with only TX, RX, RTS, and CTS lines.</p>
-    <p>See <a href="http://tibbo.com/store/tps/tibbits.html#?filter=%2301">Details</a></p>
+<script type="text/x-red" data-help-name="Tibbit-#01 in">
+    <p>#01 RS232トランシーバ</p>
+
+    <h3>Details</h3>
+    <p>TX、RX、RTS、およびCTSラインのみのシンプルなRS232ポート。</p>
+    <p>参照：<a href="http://tibbo.com/store/tps/tibbits.html#?filter=%2301">Tibbit Blocks</a></p>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">buffer object</span>
+        </dt>
+        <dd>
+            <p>※機器からのINを出力</p>
+        </dd>
+    </dl>
 </script>

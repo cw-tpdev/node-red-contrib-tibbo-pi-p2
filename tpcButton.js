@@ -21,7 +21,6 @@ module.exports = function (RED) {
         // On Node Output
         tc.onOutput(function (msg, payload) {
 
-            // to JSON
             msg.payload = JSON.parse(payload);
             node.send(msg);
 

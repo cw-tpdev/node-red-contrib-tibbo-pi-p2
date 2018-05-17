@@ -27,13 +27,12 @@ module.exports = function (RED) {
         // On Node Output
         tc.onOutput(function (msg, payload) {
 
-            // to JSON
             msg.payload = JSON.parse(payload);
             node.send(msg);
 
         });
 
     }
-    RED.nodes.registerType("Tibbit-30", TP_30Node);
+    RED.nodes.registerType("Tibbit-#30", TP_30Node);
 }
 

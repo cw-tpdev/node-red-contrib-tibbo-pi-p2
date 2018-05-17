@@ -9,7 +9,8 @@ module.exports = function (RED) {
     var TpCommon = require('./tpCommon');
     var flowJsonDir = RED.settings.userDir;
     var spawn = require('child_process').spawn;
-    var outputFile = __dirname + '/config/config.json'
+    var outputDir = __dirname + '/config/'
+    var outputFile = outputDir + 'config.json'
     var nodeName = 'tp-initialize';
 
     // Node-Red起動時に、flows.jsonの中身を確認し、このノードを先頭に移動する(デプロイ時は対応しない)
@@ -32,7 +33,7 @@ module.exports = function (RED) {
 
             // create config.json
             if (this.make) {
-                createTibboPiSettingsFile(outputFile, node);
+                createTibboPiSettingsFile(outputFile, outputDir, node);
                 node.log("created settings file!");
             }
 
@@ -46,7 +47,10 @@ module.exports = function (RED) {
         var tc = new TpCommon("tpConnect", node);
 
         // Launch python
-        node.child = spawn(tc.cmdPy, ["-u", tc.getPyPath("tpConnect"), outputFile]);
+        node.child = spawn(tc.cmdPy(), ["-u", tc.getPyPath("tpConnect"), outputFile]);
+        node.child.on('error', function (err) {
+            node.error("python fail: " + err);
+        });
 
         // Python error
         node.child.stderr.on('data', function (data) {
@@ -160,7 +164,7 @@ module.exports = function (RED) {
     }
 
     /* スロット機能 */
-    function readSlotCtrl(slotInfo, opJson, node) {
+    function readSlotCtrl(flows, slotInfo, opJson, node) {
 
         var baseTCPPort = 14000;
 
@@ -200,35 +204,36 @@ module.exports = function (RED) {
             port = port + 7;
         }
 
-        // GPIOの情報取得
+        // GPIO
         if (comm == 'GPIO') {
-            // ピン情報
-            var p1 = slotInfo.pinA;
-            var p2 = slotInfo.pinB;
-            var p3 = slotInfo.pinC;
-            var p4 = slotInfo.pinD;
-
             var setteings = {};
+            setNodeSettings(slotInfo, setteings);
+
             var pin = [];
 
-            if (p1 && p1 != 'other') {
-                pin.push({ "name": "A", "status": p1 });
+            function setPin(_status, _name) {
+
+                if (_status && _status == 'IN_Edge') {
+                    // edgeフラグを追加
+                    pin.push({ "name": _name, "status": "IN", "edge": "on" });
+                } else
+                    if (_status && _status != 'other') {
+                        pin.push({ "name": _name, "status": _status });
+                    }
+
             }
-            if (p2 && p2 != 'other') {
-                pin.push({ "name": "B", "status": p2 });
-            }
-            if (p3 && p3 != 'other') {
-                pin.push({ "name": "C", "status": p3 });
-            }
-            if (p4 && p4 != 'other') {
-                pin.push({ "name": "D", "status": p4 });
-            }
+
+            setPin(slotInfo.pinA, "A");
+            setPin(slotInfo.pinB, "B");
+            setPin(slotInfo.pinC, "C");
+            setPin(slotInfo.pinD, "D");
         }
 
         // I2Cの情報取得
         if (comm == 'I2C') {
             // ピン情報
             var setteings = {};
+            setNodeSettings(slotInfo, setteings);
             var pin = [];
             pin.push({ "name": "A", "status": "SCL" });
             pin.push({ "name": "B", "status": "SDA" });
@@ -242,6 +247,8 @@ module.exports = function (RED) {
             var endian = slotInfo.spiEndian;
 
             var setteings = { "speed": speed, "mode": mode, "endian": endian };
+            setNodeSettings(slotInfo, setteings);
+
             var pin = [];
             pin.push({ "name": "A", "status": "CS" });
             pin.push({ "name": "B", "status": "SCLK" });
@@ -252,41 +259,43 @@ module.exports = function (RED) {
         // Serialの情報取得
         if (comm == 'Serial') {
 
-            // ピン情報
-            var hardwareFlow = slotInfo.hardwareFlow;
-            var baudRate = slotInfo.seriBaudRate;
-            var dataBits = slotInfo.seriDataBits;
-            var parity = slotInfo.seriParity;
-            var stopBits = slotInfo.seriStopBits;
-            var splitInput = slotInfo.seriSplitInput;
-            var onTheCharactor = slotInfo.seriOnTheCharactor;
-            var afterATimeoutOf = slotInfo.seriAfterATimeoutOf;
-            var intoFixedLengthOf = slotInfo.seriIntoFixedLengthOf;
+            // シリアル設定を取得
+            var serialConf = getNodeFormId(flows, slotInfo.serialConf);
+            var setteings = {};
 
-            var setteings = {
-                "hardwareFlow": hardwareFlow,
-                "baudRate": baudRate,
-                "dataBits": dataBits,
-                "parity": parity,
-                "stopBits": stopBits,
-                "splitInput": splitInput,
-                "onTheCharactor": onTheCharactor,
-                "afterATimeoutOf": afterATimeoutOf,
-                "intoFixedLengthOf": intoFixedLengthOf
-            };
+            if (serialConf) {
+                var hardwareFlow = serialConf.hardwareFlow;
+                var baudRate = serialConf.seriBaudRate;
+                var dataBits = serialConf.seriDataBits;
+                var parity = serialConf.seriParity;
+                var startBits = serialConf.seriStartBits;
+                var stopBits = serialConf.seriStopBits;
+                var splitInput = serialConf.seriSplitInput;
+                var onTheCharactor = serialConf.seriOnTheCharactor;
+                var afterATimeoutOf = serialConf.seriAfterATimeoutOf;
+                var intoFixedLengthOf = serialConf.seriIntoFixedLengthOf;
+
+                var setteings = {
+                    "hardwareFlow": hardwareFlow,
+                    "baudRate": baudRate,
+                    "dataBits": dataBits,
+                    "parity": parity,
+                    "startBits": startBits,
+                    "stopBits": stopBits,
+                    "splitInput": splitInput,
+                    "onTheCharactor": un_escape(onTheCharactor),
+                    "afterATimeoutOf": afterATimeoutOf,
+                    "intoFixedLengthOf": intoFixedLengthOf
+                };
+            }
+            setNodeSettings(slotInfo, setteings);
 
             var pin = [];
-            if (slotInfo.pinA) {
-                pin.push({ "name": "A", "status": slotInfo.pinA });
-            }
-            if (slotInfo.pinB) {
-                pin.push({ "name": "B", "status": slotInfo.pinB });
-            }
-            if (slotInfo.pinC) {
-                pin.push({ "name": "C", "status": slotInfo.pinC });
-            }
-            if (slotInfo.pinD) {
-                pin.push({ "name": "D", "status": slotInfo.pinD });
+            pin.push({ "name": "A", "status": "TX" });
+            pin.push({ "name": "B", "status": "RX" });
+            if (setteings.hardwareFlow == "on") {
+                pin.push({ "name": "C", "status": "RTS" });
+                pin.push({ "name": "D", "status": "CTS" });
             }
         }
 
@@ -364,6 +373,8 @@ module.exports = function (RED) {
                     for (var idxPin in match[idx]["pin"]) {
                         if (match[idx]["pin"][idxPin]['name'] == pin[idxNewPin]['name']) {
                             isExist = true;
+                            // マージ
+                            Object.assign(match[idx]["pin"][idxPin], pin[idxNewPin]);
                             break;
                         }
                     }
@@ -374,17 +385,86 @@ module.exports = function (RED) {
             }
         }
 
+        // 追加の設定
+        if (slotInfo.moreDefaults) {
+
+            let tmpSlotInfo = Object.assign({}, slotInfo);
+            delete tmpSlotInfo.moreDefaults;
+
+            for (var i = 0; i < slotInfo.moreDefaults.length; i++) {
+
+                var moreSlot = slotInfo.moreDefaults[i];
+
+                // 通信方式とピンを変更し追加
+                delete tmpSlotInfo.communication;
+                delete tmpSlotInfo.pinA;
+                delete tmpSlotInfo.pinB;
+                delete tmpSlotInfo.pinC;
+                delete tmpSlotInfo.pinD;
+
+                if (moreSlot.communication) {
+                    tmpSlotInfo.communication = moreSlot.communication.value;
+                }
+                if (moreSlot.pinA) {
+                    tmpSlotInfo.pinA = moreSlot.pinA.value;
+                }
+                if (moreSlot.pinB) {
+                    tmpSlotInfo.pinB = moreSlot.pinB.value;
+                }
+                if (moreSlot.pinC) {
+                    tmpSlotInfo.pinC = moreSlot.pinC.value;
+                }
+                if (moreSlot.pinD) {
+                    tmpSlotInfo.pinD = moreSlot.pinD.value;
+                }
+                opJson = readSlotCtrl(flows, tmpSlotInfo, opJson, node)
+            }
+        }
+
         return opJson;
     }
 
+    /* IDでノードを検索 */
+    function getNodeFormId(flows, id) {
+
+        var list = flows.filter(function (item, index) {
+            if (id == item['id']) return true;
+        });
+        if (list.length >= 1) {
+            return list[0];
+        }
+        return null;
+    }
+
+    /* unescape */
+    function un_escape(str) {
+        var temp = str;
+        temp = temp.replace(/\\r/g, '\r');
+        temp = temp.replace(/\\n/g, '\n');
+        temp = temp.replace(/\\t/g, '\t');
+        return temp;
+    }
+
+    /* 各ノードの個別設定を追加 */
+    function setNodeSettings(slotInfo, settings) {
+
+        // [_]付きのキーを取得
+        for (const key of Object.keys(slotInfo)) {
+            if (key.indexOf('_') === 0) {
+                // [_]は取り除く
+                settings[key.slice(1)] = slotInfo[key];
+            }
+        }
+    }
+
     /* node-redのフローファイルからスロット情報取得 */
-    function createTibboPiSettingsFile(outputFile, node) {
+    function createTibboPiSettingsFile(outputFile, outputDir, node) {
 
         // flowの取得
-        var json = getFlowsJson();
+        var flows = getFlowsJson();
 
         // tp Initializeの複数ノードチェック
-        var initList = json.filter(function (item, index) {
+        var initList = flows.filter(function (item, index) {
             if (nodeName == item['type']) return true;
         });
         if (initList.length > 1) {
@@ -392,7 +472,7 @@ module.exports = function (RED) {
         }
 
         // スロット情報のみ抽出
-        var sInfoList = json.filter(function (item, index) {
+        var sInfoList = flows.filter(function (item, index) {
             if ('tpSlot' in item) return true;
         });
 
@@ -409,10 +489,14 @@ module.exports = function (RED) {
                 opJson = readTibboPiCtrl(slotInfo, opJson, node);
             } else {
                 // Slotの設定
-                opJson = readSlotCtrl(slotInfo, opJson, node);
+                opJson = readSlotCtrl(flows, slotInfo, opJson, node);
             }
         }
 
+        // mkdir
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir);
+        }
         // save
         fs.writeFileSync(outputFile, JSON.stringify(opJson, null, '    '));
     }

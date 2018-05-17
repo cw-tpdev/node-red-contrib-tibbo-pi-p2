@@ -33,6 +33,6 @@ module.exports = function (RED) {
         });
 
     }
-    RED.nodes.registerType("Tibbit-29", TP_29Node);
+    RED.nodes.registerType("Tibbit-#29", TP_29Node);
 }
 

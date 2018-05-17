@@ -1,12 +1,12 @@
 {
     "initialize": {
         "label": {
-			"name" : "名前",
-			"make" : "現フローの設定ファイル(config.json)を作成する"
+			"name" : "Name",
+			"make" : "Create a flow configuration file. (config.json)"
 		},
         "status": {
-            "started": "TP起動済",
-            "stopped": "TP停止"
+            "started": "TP Started",
+            "stopped": "TP Stopped"
         }
     }
 }

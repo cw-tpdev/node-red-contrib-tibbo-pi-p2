@@ -1,8 +1,9 @@
 import sys
-from tp00_3 import Tp00_3
+from tp00 import Tp00
 import tpUtils
 from constant import *
 import json
+import time
 
 
 class Tp30:
@@ -22,9 +23,9 @@ class Tp30:
         # アドレス
         self.i2c_addr = 0x27
 
-        # tp00_3
-        self.tp00_3 = Tp00_3(self.slot, self.comm, self.host)
-        self.tp00_3.start()
+        # tp00
+        self.tp00 = Tp00(self.slot, self.comm, self.host)
+        self.tp00.start()
 
     def get_data(self):
         """
@@ -33,13 +34,13 @@ class Tp30:
         send_data = []
         send_data.append(
             {"act": "r", "add": self.i2c_addr, "cmd": 0x00, "len": 4})
-        _result = self.tp00_3.send(json.dumps(send_data))
+        _result = self.tp00.send(json.dumps(send_data))
+        time.sleep(0.05)
+        _result = self.tp00.send(json.dumps(send_data))
 
         # jsonで受け取る
         result_data = json.loads(_result.decode())
         result = result_data[0]
-
-        # TODO ソースのチェックと、湿度計・温度計での確認はしたい。
 
         # データから変換
         humd = ((result[0] & 0x3F) * 256 + result[1]) / 16383 * 100

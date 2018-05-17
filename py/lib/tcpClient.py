@@ -81,7 +81,7 @@ class TcpClient:
                 try:
                     time.sleep(1)
                 except KeyboardInterrupt:
-                    pass
+                    sys.exit(0)
 
     def send(self, send_data):
         """
