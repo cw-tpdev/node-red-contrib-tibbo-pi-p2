@@ -21,7 +21,7 @@ SLOT_SETTING_SPI  = 0x03
 LINE_SETTING_NONE  = 0
 LINE_SETTING_A_IN  = 1
 LINE_SETTING_D_IN  = 2
-LINE_SETTING_D_OUT = 4
+LINE_SETTING_D_OUT = 3 # オープンドレイン
 
 SPI_WAIT = 0.01 # SPIアクセス後のwait秒
 CHECK_WAIT = 0.01 # GPIO edge, Serial イベントの定期チェックwait秒 
