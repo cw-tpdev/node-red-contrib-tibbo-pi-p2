@@ -508,8 +508,12 @@ module.exports = function (RED) {
         var fileName = getFlowsPath();
 
         // flow.jsonファイル読込
-        var json_body = fs.readFileSync(fileName, 'utf-8');
-        return JSON.parse(json_body);
+        if (fs.existsSync(fileName)) {
+            var json_body = fs.readFileSync(fileName, 'utf-8');
+            return JSON.parse(json_body);
+        } else {
+            return null;
+        }
 
     }
 
@@ -539,6 +543,10 @@ module.exports = function (RED) {
 
         // 中身を取得
         var json = getFlowsJson();
+
+        if (!json) {
+            return;
+        }
 
         // 並び替えが必要かチェック
         for (var i = 0; i < json.length; i++) {
