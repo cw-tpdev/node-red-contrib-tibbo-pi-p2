@@ -41,6 +41,9 @@ class TpP2Interface():
             GPIO.setmode(GPIO.BCM)
             path = os.path.dirname(os.path.abspath(__file__))
             subprocess.call(['/bin/sh', path + '/c/ch.sh', path + '/c/spi_access'])
+            subprocess.call(['/bin/sh', path + '/c/ch.sh', path + '/c/i2c_read_tp22'])
+            subprocess.call(['/bin/sh', path + '/c/ch.sh', path + '/c/i2c_write_tp22'])
+            subprocess.call(['/bin/sh', path + '/c/ch.sh', path + '/c/tp22_temp'])
 
             # パラメータ定義
             self.__gpio_in_edge_table = []
@@ -57,6 +60,10 @@ class TpP2Interface():
             self.__pic_spi_khz = 250
             self.__pic_spi_endian = 1
             self.__pic_spi_wait_ms = 0
+
+            # Tibbit#22用設定
+            self.__tb22_addr = '0x0D'
+            self.__tb22_kbaud = 20
 
         else: # 非Tibbo-Pi環境（以下全メソッドで同様, dummy値を返すこともあり）
             pass
@@ -96,24 +103,6 @@ class TpP2Interface():
                 #pin = self.__serial_int_table[pos]
                 #GPIO.add_event_detect(pin, GPIO.FALLING, callback = self.__serial_event_callback, bouncetime = 10) 
                 thread.start_new_thread(self.__check_serial_thread, ())
-
-    #def serial_event_callback_test(self, pin):
-    #    self.__serial_event_callback(pin)
-    def __serial_event_callback(self, pin):
-        #print(pin)
-        pos = self.__serial_int_table.index(pin)
-        slot = pos * 2 + 1
-        if gTpEnv:
-            num_addr = pos + 0x6A
-            dat_addr = pos + 0x74
-            while True:
-                dmy = [0]
-                buff_num = self.__pic_spi_access(num_addr, dmy)[0]
-                if buff_num == 0: break
-                dmy = [0] * buff_num
-                data = self.__pic_spi_access(dat_addr, dmy)
-                #print(slot, buff_num, data)
-                self.serial_event_callback(slot, data)
 
     def serial_write(self, slot, vals):
         """ Serial書き込み
@@ -266,6 +255,109 @@ class TpP2Interface():
         on = 1 if on == 0 else 0
         GPIO.output(self.__rp_led_table[num - 1], on)
 
+    def tp22_temp(self, slot):
+        """ Tibbit#22, RTD読み出し
+            slot    : 1 ~ 10
+            戻り    : 16bit (0x1234 など)
+        """
+        if gTpEnv:
+            c_cmd = os.path.dirname(os.path.abspath(__file__)) +\
+                '/c/tp22_temp ' +\
+                str(slot) + ' ' +\
+                str(self.__tb22_kbaud) 
+            #print(c_cmd)
+
+            c_ret = subprocess.Popen(c_cmd,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True)
+
+            c_return = c_ret.wait()
+            ret_bin = c_ret.stdout.readlines()
+            #print(c_return, ret_bin)
+            c_return -= 256 if c_return > 127 else c_return
+            if c_return != 0:
+                raise ValueError('i2c_read_tp22 error! : c_return = ' + str(c_return))
+            ret_str = str(ret_bin[0])[2:-1]
+            ret = int(ret_str[2:], 16)
+            #print(ret)
+            self.__i2c_end_tp22()
+            return ret
+        else:
+            pass
+
+    def i2c_read_tp22(self, slot, num):
+        """ Tibbit#22, I2C読み出し
+            slot    : 1 ~ 10
+            num     : 読み込みbyte数
+        """
+        #print('i2c_read_tp22', slot, num)
+        if gTpEnv:
+            c_cmd = os.path.dirname(os.path.abspath(__file__)) +\
+                '/c/i2c_read_tp22 ' +\
+                str(slot) + ' ' +\
+                str(self.__tb22_kbaud) + ' ' +\
+                self.__tb22_addr + ' ' +\
+                str(num)
+            #print(c_cmd)
+
+            c_ret = subprocess.Popen(c_cmd,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True)
+
+            c_return = c_ret.wait()
+            ret_bin = c_ret.stdout.readlines()
+            #print(c_return, ret_bin)
+            c_return -= 256 if c_return > 127 else c_return
+            if c_return != 0:
+                raise ValueError('i2c_read_tp22 error! : c_return = ' + str(c_return))
+            ret_str = str(ret_bin[0])[2:-1]
+            ret_str_sep = ret_str.split(',')
+            ret = []
+            for elem in ret_str_sep:
+                ret.append(int(elem[2:], 16)) 
+            #print(ret)
+            self.__i2c_end_tp22()
+            return ret
+        else:
+            pass
+
+    def i2c_write_tp22(self, slot, data, addr = 0):
+        """ Tibbit#22, I2C書き込み
+            slot    : 1 ~ 10
+            data    : 1byteのみ、書き込みデータ
+            addr    : 指定されていたらSPIアドレス、0x80以上のはず
+        """
+        #print('i2c_write_tp22', slot, data, addr)
+        if gTpEnv:
+            c_cmd = os.path.dirname(os.path.abspath(__file__)) +\
+                '/c/i2c_write_tp22 ' +\
+                str(slot) + ' ' +\
+                str(self.__tb22_kbaud) + ' ' +\
+                self.__tb22_addr + ' ' +\
+                '0x' + format(int(data), '02x') 
+            if addr != 0: c_cmd += ' 0x' + format(int(addr), '02x')
+            #print(c_cmd)
+
+            c_ret = subprocess.Popen(c_cmd,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True)
+
+            c_return = c_ret.wait()
+            ret_bin = c_ret.stdout.readlines()
+            #print(c_return, ret_bin)
+            c_return -= 256 if c_return > 127 else c_return
+            if c_return != 0:
+                raise ValueError('i2c_write_tp22 error! : c_return = ' + str(c_return))
+        else:
+            pass
+        self.__i2c_end_tp22()
+
     def i2c_read(self, address, cmd, num):
         """ I2C読み出し
             address : I2Cアドレス
@@ -314,6 +406,27 @@ class TpP2Interface():
 
     # 内部メソッド ---
 
+    def __i2c_end_tp22(self):
+        subprocess.call('sudo i2cdetect -y 1 > /dev/null', shell=True)
+
+    #def serial_event_callback_test(self, pin):
+    #    self.__serial_event_callback(pin)
+    def __serial_event_callback(self, pin):
+        #print(pin)
+        pos = self.__serial_int_table.index(pin)
+        slot = pos * 2 + 1
+        if gTpEnv:
+            num_addr = pos + 0x6A
+            dat_addr = pos + 0x74
+            while True:
+                dmy = [0]
+                buff_num = self.__pic_spi_access(num_addr, dmy)[0]
+                if buff_num == 0: break
+                dmy = [0] * buff_num
+                data = self.__pic_spi_access(dat_addr, dmy)
+                #print(slot, buff_num, data)
+                self.serial_event_callback(slot, data)
+
     def __serial_data(self, baud, flow, parity):
         # ボーレート
         if baud == 2400:
@@ -352,13 +465,16 @@ class TpP2Interface():
                 self.__pic_spi_endian,
                 self.__pic_spi_wait_ms,
                 address, vals)
-
+        #time.sleep(SPI_WAIT)
         #end_time = time.time()
         #dt = end_time - begin_time
         #print('dt_ms =', dt * 1000)
         return ret
 
     def __rp_gpio_init(self):
+        # I2C
+        #RPIO.setup(2, RPIO.ALT0)
+        #RPIO.setup(3, RPIO.ALT0)
         # SPI
         for pin in self.__spi_cs_table: 
             GPIO.setup(pin, GPIO.OUT)
@@ -499,3 +615,4 @@ if __name__ == '__main__':
     lock = thread.allocate_lock()
     inter.spi_init(lock)
     inter.board_init()
+

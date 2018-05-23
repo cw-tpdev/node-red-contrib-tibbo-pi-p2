@@ -90,3 +90,10 @@ def to_num(num):
     引数を数値に変換します。
     """
     return int(num) if type(num) is str else num
+
+
+def to_float(num):
+    """
+    引数をFloatに変換します。
+    """
+    return float(num) if type(num) is str else num

@@ -202,6 +202,9 @@ module.exports = function (RED) {
             port = port + 5;
         } else if (comm == 'Serial') {
             port = port + 7;
+        } else {
+            // other
+            port = port + 9;
         }
 
         // GPIO
@@ -227,21 +230,17 @@ module.exports = function (RED) {
             setPin(slotInfo.pinB, "B");
             setPin(slotInfo.pinC, "C");
             setPin(slotInfo.pinD, "D");
-        }
-
+        } else 
         // I2Cの情報取得
         if (comm == 'I2C') {
-            // ピン情報
             var setteings = {};
             setNodeSettings(slotInfo, setteings);
             var pin = [];
             pin.push({ "name": "A", "status": "SCL" });
             pin.push({ "name": "B", "status": "SDA" });
-        }
-
+        } else
         // SPIの情報取得
         if (comm == 'SPI') {
-            // ピン情報
             var speed = slotInfo.spiSpeed;
             var mode = slotInfo.spiMode;
             var endian = slotInfo.spiEndian;
@@ -254,8 +253,7 @@ module.exports = function (RED) {
             pin.push({ "name": "B", "status": "SCLK" });
             pin.push({ "name": "C", "status": "MOSI" });
             pin.push({ "name": "D", "status": "MISO" });
-        }
-
+        } else
         // Serialの情報取得
         if (comm == 'Serial') {
 
@@ -297,6 +295,11 @@ module.exports = function (RED) {
                 pin.push({ "name": "C", "status": "RTS" });
                 pin.push({ "name": "D", "status": "CTS" });
             }
+        } else {
+            // その他
+            var setteings = {};
+            setNodeSettings(slotInfo, setteings);
+            var pin = [];
         }
 
         // 同じスロットで、ラインに別な設定がないかチェック

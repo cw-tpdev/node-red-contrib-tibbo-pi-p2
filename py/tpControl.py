@@ -2,6 +2,7 @@ import time
 import json
 from constant import *
 from tpBoardInterface import TpBoardInterface
+from tpEtcInterface import TpEtcInterface
 import tpUtils
 
 
@@ -26,6 +27,7 @@ class TpControl:
 
         # 基板用インターフェース準備
         self.tp_inter = TpBoardInterface(settings, self.__send_data)
+        self.etc_inter = TpEtcInterface(self.tp_inter)
 
     def control(self, setting, rcv_msg):
         """
@@ -103,7 +105,8 @@ class TpControl:
                     # 戻り値
                     rtn.append(read_data)
                 elif status == 'IN_Analog':
-                    read_data = self.tp_inter.analog_read(setting['slot'], line)
+                    read_data = self.tp_inter.analog_read(
+                        setting['slot'], line)
                     # 戻り値
                     rtn.append(read_data)
                 elif status == 'OUT':
@@ -176,7 +179,7 @@ class TpControl:
 
                 # SPIの処理を行う。SPIの場合は必ず戻り値がある
                 rtn_data = self.tp_inter.spi_access(
-                        setting['slot'], address, vals)
+                    setting['slot'], address, vals)
 
                 # 戻り値
                 rtn.append(rtn_data)
@@ -191,10 +194,23 @@ class TpControl:
 
             # Serial送信の処理を行う。
             rtn_data = self.tp_inter.serial_write(
-                        setting['slot'], rcv_msg)
+                setting['slot'], rcv_msg)
 
             # 戻り値は無し
             return
+
+        elif setting['comm'] == 'TP22':
+            #--------------
+            # Tibbit #22
+            #--------------
+
+            # Jsonでデータ取得
+            data = json.loads(rcv_msg.decode())
+
+            if data['act'] == 'v':  # バージョン
+                return self.etc_inter.tp22_get_ver(setting['slot'])
+            elif data['act'] == 't':  # 温度
+                return str(self.etc_inter.tp22_get_temp(setting['slot'], setting['settings']['kind']))
 
     def __send_data(self, slot, comm, send_msg):
         """

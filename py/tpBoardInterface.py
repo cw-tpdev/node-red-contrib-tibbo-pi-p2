@@ -171,6 +171,52 @@ class TpBoardInterface:
 
         return data
 
+    def tp22_temp(self, slot):
+        """
+        Tibbit#22, RTD読み出し
+        slot : 'S01' ~ 'S10'
+        """
+        slot_num = tpUtils.slot_str_to_int(slot)
+        self.i2c_lock.acquire(1)
+        data = self.__board.tp22_temp(slot_num)
+        self.i2c_lock.release()
+        return data
+
+    def i2c_read_tp22(self, slot, num):
+        """
+        Tibbit#22, I2C読み出し
+        slot : 'S01' ~ 'S10'
+        num  : 読み込みbyte数
+        """
+        slot_num = tpUtils.slot_str_to_int(slot)
+        self.i2c_lock.acquire(1)
+        data = self.__board.i2c_read_tp22(slot_num, num)
+        self.i2c_lock.release()
+        return data
+
+    def i2c_write_tp22(self, slot, val):
+        """
+        Tibbit#22, I2C書き込み
+        slot : 'S01' ~ 'S10'
+        val  : 書き込みデータ、1byteのみ
+        """
+        slot_num = tpUtils.slot_str_to_int(slot)
+        self.i2c_lock.acquire(1)
+        self.__board.i2c_write_tp22(slot_num, val)
+        self.i2c_lock.release()
+
+    def i2c_write_tp22_spi(self, slot, addr, val):
+        """
+        Tibbit#22, I2C書き込み(内部SPIデバイス)
+        slot : 'S01' ~ 'S10'
+        addr : SPIアドレス、0x80以上
+        val  : 書き込みデータ、1byteのみ
+        """
+        slot_num = tpUtils.slot_str_to_int(slot)
+        self.i2c_lock.acquire(1)
+        self.__board.i2c_write_tp22(slot_num, val, addr)
+        self.i2c_lock.release()
+
     def i2c_read(self, slot, address, cmd, num):
         """
         I2C読み出し
@@ -471,3 +517,4 @@ if __name__ == '__main__':
     from tpConfig import TpConfig
     tp_config = TpConfig()
     inter = TpBoardInterface(tp_config.get_settings(), '')
+

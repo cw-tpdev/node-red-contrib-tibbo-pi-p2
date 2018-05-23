@@ -1,10 +1,8 @@
 
-import sys
-from tp00 import Tp00
+from lib.tcpClient import TcpClient
 import tpUtils
-from constant import *
+import sys
 import json
-import time
 
 
 class Tp22:
@@ -16,150 +14,25 @@ class Tp22:
         """
         コンストラクタ
         """
-
-        # TODO 00ではないので修正
-
         self.slot = slot
-        self.comm = I2C
+        self.comm = 'TP22'
         self.host = host
 
-        # アドレス
-        self.i2c_addr = 0x0D
-
-        # tp00
-        self.tp00 = Tp00(self.slot, self.comm, self.host)
-        self.tp00.start()
+    def start(self):
+        """
+        開始処理
+        """
+        self.tcp_client = TcpClient()
+        self.tcp_client.connect_by_conf(self.host, self.slot, self.comm)
 
     def get_data(self):
         """
         データを取得します。
         """
-        # send_data = []
-        # send_data.append(
-        #     {"act": "w", "add": self.i2c_addr, "cmd": 0x80, "v": [0x00]})
-        # self.tp00.send(json.dumps(send_data))
-        # time.sleep(0.3)
 
-        # send_data = []
-        # send_data.append(
-        #     {"act": "w", "add": self.i2c_addr, "cmd": 0x85, "v": [0x00]})
-        # self.tp00.send(json.dumps(send_data))
-        # time.sleep(0.3)
-
-        # send_data = []
-        # send_data.append(
-        #     {"act": "w", "add": self.i2c_addr, "cmd": 0x86, "v": [0x00]})
-        # self.tp00.send(json.dumps(send_data))
-        # time.sleep(0.3)
-
-        # send_data = []
-        # send_data.append(
-        #     {"act": "w", "add": self.i2c_addr, "cmd": 0x83, "v": [0xFF]})
-        # self.tp00.send(json.dumps(send_data))
-        # time.sleep(0.3)
-
-        # send_data = []
-        # send_data.append(
-        #     {"act": "w", "add": self.i2c_addr, "cmd": 0x84, "v": [0xFF]})
-        # self.tp00.send(json.dumps(send_data))
-        # time.sleep(0.3)
-
-        # # 設定書き込み
-        # send_data = []
-        # send_data.append(
-        #     {"act": "w", "add": self.i2c_addr, "cmd": 0x80, "v": [0xC2]})
-        # self.tp00.send(json.dumps(send_data))
-        # time.sleep(0.3)
-
-        # 以下読み込んで見る
-        send_data = []
-        # send_data.append(
-        #     {"act": "w", "add": self.i2c_addr, "cmd": 0x80, "v": [0x1A]})
-        # self.tp00.send(json.dumps(send_data))
-        # time.sleep(0.3)
-
-        # send_data = []
-        # send_data.append(
-        #     {"act": "w", "add": self.i2c_addr, "cmd": 0x80, "v": [0x3]})
-        # self.tp00.send(json.dumps(send_data))
-        # time.sleep(0.3)
-
-        # send_data = []
-        # send_data.append(
-        #     {"act": "w", "add": self.i2c_addr, "cmd": 0x80, "v": [0x1B]})
-        # self.tp00.send(json.dumps(send_data))
-        # time.sleep(0.3)
-
-        #------------------------
-        # バージョンをだしてみる ここから
-        #------------------------
-
-        # バージョン取るために0x3を書き込み
-        send_data = []
-        send_data.append(
-            {"act": "w", "add": self.i2c_addr, "cmd": 0x80, "v": [0x3]})
-        #self.tp00.send(json.dumps(send_data))
-        #time.sleep(0.05)
-
-        # 読み込み
-        #send_data = []
-        send_data.append(
-            {"act": "r", "add": self.i2c_addr, "cmd": 0x80, "len": 16})
-        _result = self.tp00.send(json.dumps(send_data))
-        result_data = json.loads(_result.decode())
-        result_data = result_data[0]
-
-        ver = ''
-        for verchr in result_data:
-            ver = ver + chr(verchr)
-
-        print(result_data)
-        print(ver)
-        time.sleep(0.3)
-
-        #------------------------
-        # バージョンをだしてみる ここまで
-        #------------------------
-
-        send_data = []
-        send_data.append(
-            {"act": "w", "add": self.i2c_addr, "cmd": 0x80, "v": [0x1]})
-        self.tp00.send(json.dumps(send_data))
-        time.sleep(0.5)
-
-        # send_data = []
-        # send_data.append(
-        #     {"act": "w", "add": self.i2c_addr, "cmd": 0x80, "v": []})
-        # self.tp00.send(json.dumps(send_data))
-        # time.sleep(0.5)
-
-        # 読み込み
-        send_data = []
-        send_data.append(
-            {"act": "r", "add": self.i2c_addr, "cmd": 0x80, "len": 1})
-        _result = self.tp00.send(json.dumps(send_data))
-        result_data = json.loads(_result.decode())
-        result_data = result_data[0]
-        print(result_data)
-
-        send_data = []
-        send_data.append(
-            {"act": "r", "add": 0xff, "cmd": 0x80, "len": 5})
-        _result = self.tp00.send(json.dumps(send_data))
-        result_data = json.loads(_result.decode())
-        result_data = result_data[0]
-        print(result_data)
-
-        # TODO ここでLOW待ち
-
-        # 読み込み
-        # send_data = []
-        # send_data.append(
-        #     {"act": "r", "add": self.i2c_addr, "cmd": 0x80, "len": 1}) # 8 + 2くらい？
-        # _result = self.tp00.send(json.dumps(send_data))
-        # result_data = json.loads(_result.decode())
-        # result_data = result_data[0]
-        # print(result_data)
+        _result = self.tcp_client.send(json.dumps({"act": "t"}))
+        result_data = tpUtils.to_float(_result.decode())
+        return result_data
 
 
 if __name__ == '__main__':
@@ -175,6 +48,7 @@ if __name__ == '__main__':
         if (len(argvs) > 2):
             host = argvs[2]
         tp22 = Tp22(slot, host)
+        tp22.start()
     except Exception as e:
         tpUtils.stderr(str(e.args))
         sys.exit(0)
