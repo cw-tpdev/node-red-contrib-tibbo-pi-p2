@@ -29,6 +29,30 @@ PIC_RST_CMD = 0xA0
 PIC_WRITE_ADDR = 0x80
 
 # クラス宣言 -------------------------------------------------------------
+class TpLock():
+    """
+        排他処理用クラス
+    """
+
+    def __init__(self, lock_num):
+        """ コンストラクタ
+            指定した個数分のlockを確保する
+        """
+        self.lock = []
+        for i in range(lock_num): self.lock.append(thread.allocate_lock())
+
+    def acquire(self, pos):
+        """ 該当の箇所のlockを取得する 
+            pos : 該当のlockの場所
+        """
+        self.lock[pos].acquire(1)
+
+    def release(self, pos):
+        """ 該当の箇所のlockを解放する 
+            pos : 該当のlockの場所
+        """
+        self.lock[pos].release()
+
 class TpP2Interface():
     global gTpEnv
 
@@ -36,14 +60,19 @@ class TpP2Interface():
         """ コンストラクタ
         """
         if gTpEnv: # Tibbo-Pi環境（以下全メソッドで同様）
+            # 排他処理用設定
+            self.__gpio_lock = TpLock(5)
+            self.__line_lock = TpLock(10)
+
             # ハードウェア設定
             self.__i2c = smbus.SMBus(1)
             GPIO.setmode(GPIO.BCM)
-            path = os.path.dirname(os.path.abspath(__file__))
-            subprocess.call(['/bin/sh', path + '/c/ch.sh', path + '/c/spi_access'])
-            subprocess.call(['/bin/sh', path + '/c/ch.sh', path + '/c/i2c_read_tp22'])
-            subprocess.call(['/bin/sh', path + '/c/ch.sh', path + '/c/i2c_write_tp22'])
-            subprocess.call(['/bin/sh', path + '/c/ch.sh', path + '/c/tp22_temp'])
+            self.__path = os.path.dirname(os.path.abspath(__file__))
+            subprocess.call(['/bin/sh', self.__path + '/c/ch.sh', self.__path + '/c/spi_access'])
+            subprocess.call(['/bin/sh', self.__path + '/c/ch.sh', self.__path + '/c/i2c_read_tp22'])
+            subprocess.call(['/bin/sh', self.__path + '/c/ch.sh', self.__path + '/c/i2c_write_tp22'])
+            subprocess.call(['/bin/sh', self.__path + '/c/ch.sh', self.__path + '/c/tp22_temp'])
+            subprocess.call(['/bin/sh', self.__path + '/c/ch.sh', self.__path + '/c/end_tp22.sh'])
 
             # パラメータ定義
             self.__gpio_in_edge_table = []
@@ -63,7 +92,7 @@ class TpP2Interface():
 
             # Tibbit#22用設定
             self.__tb22_addr = '0x0D'
-            self.__tb22_kbaud = 20
+            self.__tb22_kbaud = 15
 
         else: # 非Tibbo-Pi環境（以下全メソッドで同様, dummy値を返すこともあり）
             pass
@@ -140,7 +169,7 @@ class TpP2Interface():
         #print('spi_access', slot, mode, speed, endian, wait_ms, hex(address), vals)
         data = vals[:] # 実コピー
         if gTpEnv:
-            c_cmd = os.path.dirname(os.path.abspath(__file__)) +\
+            c_cmd = self.__path +\
                 '/c/spi_access ' +\
                 str(mode) + ' ' +\
                 str(speed) + ' ' +\
@@ -204,9 +233,9 @@ class TpP2Interface():
             dmy = [0]
             dat = self.__pic_spi_access(addr, dmy)
             #print('analog_read', slot, line, hex(addr), dat)
-            return dat
+            return dat[0]
         else:
-            return [0]
+            return 0
 
     def gpio_read(self, slot, line):
         """ GPIO読み出し
@@ -223,8 +252,10 @@ class TpP2Interface():
             val  : 0 or 1
         """
         self.__line_set(slot, line, LINE_SETTING_D_OUT)
-        addr = int((slot - 1) / 2) + 0x29
+        lock_pos = int((slot - 1) / 2)
+        addr = lock_pos + 0x29
         dmy = [0]
+        self.__gpio_lock.acquire(lock_pos) # 過去データorするため排他開始
         old = self.__pic_spi_access(addr, dmy)[0]
         # MSB:S1A,S1B,S1C,S1D,S2A,S2B,S2C,S2D:LSB のようなならび
         bit = 1 << (4 - line)
@@ -234,6 +265,7 @@ class TpP2Interface():
         addr += PIC_WRITE_ADDR
         #print('gpio_write', slot, line, val, hex(addr), hex(dat))
         self.__pic_spi_access(addr, [dat])
+        self.__gpio_lock.release(lock_pos) # 排他解放
 
     def rp_button_init(self, callback):
         """ 基板ボタン用設定
@@ -261,7 +293,7 @@ class TpP2Interface():
             戻り    : 16bit (0x1234 など)
         """
         if gTpEnv:
-            c_cmd = os.path.dirname(os.path.abspath(__file__)) +\
+            c_cmd = self.__path +\
                 '/c/tp22_temp ' +\
                 str(slot) + ' ' +\
                 str(self.__tb22_kbaud) 
@@ -386,8 +418,8 @@ class TpP2Interface():
             slot : 0(未選択), 1~10
         """
         if slot >= 1 and slot <= 5:
-            self.i2c_write_1byte(0x70, 0x08 | (slot - 0))
             self.i2c_write_1byte(0x71, 0)
+            self.i2c_write_1byte(0x70, 0x08 | (slot - 0))
         elif slot >= 6 and slot <= 10:
             self.i2c_write_1byte(0x70, 0)
             self.i2c_write_1byte(0x71, 0x08 | (slot - 5))
@@ -407,7 +439,12 @@ class TpP2Interface():
     # 内部メソッド ---
 
     def __i2c_end_tp22(self):
-        subprocess.call('sudo i2cdetect -y 1 > /dev/null', shell=True)
+        while True:
+            try:
+                self.i2c_select(0)
+                break
+            except:
+                subprocess.call(self.__path + '/c/end_tp22.sh', shell=True)
 
     #def serial_event_callback_test(self, pin):
     #    self.__serial_event_callback(pin)
@@ -569,9 +606,11 @@ class TpP2Interface():
 
         # 設定開始
         # 現在情報読み込み 
-        addr = (slot - 1) * 3 + 0x0B
+        lock_pos = slot - 1
+        addr = lock_pos * 3 + 0x0B
         if line == 1 or line == 2: # A or B
             dmy = [0]
+            self.__line_lock.acquire(lock_pos) # 過去データorするため排他開始
             val = self.__pic_spi_access(addr + 1, dmy)
             if line == 1: # A 
                 val[0] = (val[0] & 0x0F) | (kind << 4)
@@ -579,6 +618,7 @@ class TpP2Interface():
                 val[0] = (val[0] & 0xF0) | (kind)
         else: # C or D
             dmy = [0, 0]
+            self.__line_lock.acquire(lock_pos) # 過去データorするため排他開始
             val = self.__pic_spi_access(addr + 1, dmy)
             if line == 3: # C
                 val[1] = (val[1] & 0x0F) | (kind << 4)
@@ -588,6 +628,7 @@ class TpP2Interface():
         val.insert(0, SLOT_SETTING_NONE)
         #print(hex(addr), val, kind)
         self.__pic_spi_access(PIC_WRITE_ADDR + addr, val)
+        self.__line_lock.release(lock_pos) # 排他解放
 
     def __check_gpio_thread(self):
         """ event登録のかわりにloopで処理

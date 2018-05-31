@@ -35,7 +35,7 @@ class Tp30:
         send_data.append(
             {"act": "r", "add": self.i2c_addr, "cmd": 0x00, "len": 4})
         _result = self.tp00.send(json.dumps(send_data))
-        time.sleep(0.05)
+        time.sleep(0.03)
         _result = self.tp00.send(json.dumps(send_data))
 
         # jsonで受け取る
