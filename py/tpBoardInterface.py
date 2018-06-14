@@ -178,8 +178,12 @@ class TpBoardInterface:
         """
         slot_num = tpUtils.slot_str_to_int(slot)
         self.i2c_lock.acquire(1)
-        data = self.__board.tp22_temp(slot_num)
-        self.i2c_lock.release()
+        try:
+            data = self.__board.tp22_temp(slot_num)
+        except:
+            raise
+        finally:
+            self.i2c_lock.release()
         return data
 
     def i2c_read_tp22(self, slot, num):
@@ -190,8 +194,12 @@ class TpBoardInterface:
         """
         slot_num = tpUtils.slot_str_to_int(slot)
         self.i2c_lock.acquire(1)
-        data = self.__board.i2c_read_tp22(slot_num, num)
-        self.i2c_lock.release()
+        try:
+            data = self.__board.i2c_read_tp22(slot_num, num)
+        except:
+            raise
+        finally:
+            self.i2c_lock.release()
         return data
 
     def i2c_write_tp22(self, slot, val):
@@ -202,8 +210,12 @@ class TpBoardInterface:
         """
         slot_num = tpUtils.slot_str_to_int(slot)
         self.i2c_lock.acquire(1)
-        self.__board.i2c_write_tp22(slot_num, val)
-        self.i2c_lock.release()
+        try:
+            self.__board.i2c_write_tp22(slot_num, val)
+        except:
+            raise
+        finally:
+            self.i2c_lock.release()
 
     def i2c_write_tp22_spi(self, slot, addr, val):
         """
@@ -214,8 +226,12 @@ class TpBoardInterface:
         """
         slot_num = tpUtils.slot_str_to_int(slot)
         self.i2c_lock.acquire(1)
-        self.__board.i2c_write_tp22(slot_num, val, addr)
-        self.i2c_lock.release()
+        try:
+            self.__board.i2c_write_tp22(slot_num, val, addr)
+        except:
+            raise
+        finally:
+            self.i2c_lock.release()
 
     def i2c_read(self, slot, address, cmd, num):
         """
@@ -228,11 +244,14 @@ class TpBoardInterface:
         slot_num = tpUtils.slot_str_to_int(slot)
 
         self.i2c_lock.acquire(1)
-        self.__board.i2c_select(slot_num)
-        data = self.__board.i2c_read(address, cmd, num)
-        self.__board.i2c_select() # slot選択解除
-        self.i2c_lock.release()
-
+        try:
+            self.__board.i2c_select(slot_num)
+            data = self.__board.i2c_read(address, cmd, num)
+        except:
+            raise
+        finally:
+            self.__board.i2c_select() # slot選択解除
+            self.i2c_lock.release()
         return data
 
     def i2c_write(self, slot, address, vals):
@@ -247,13 +266,17 @@ class TpBoardInterface:
             raise ValueError('I2C write data number error! : ' + str(len(vals)))
 
         self.i2c_lock.acquire(1)
-        self.__board.i2c_select(slot_num)
-        if len(vals) == 1:
-            self.__board.i2c_write_1byte(address, vals[0])
-        else: # 2byte
-            self.__board.i2c_write_2byte(address, vals[0], vals[1])
-        self.__board.i2c_select() # slot選択解除
-        self.i2c_lock.release()
+        try:
+            self.__board.i2c_select(slot_num)
+            if len(vals) == 1:
+                self.__board.i2c_write_1byte(address, vals[0])
+            else: # 2byte
+                self.__board.i2c_write_2byte(address, vals[0], vals[1])
+        except:
+            raise
+        finally:
+            self.__board.i2c_select() # slot選択解除
+            self.i2c_lock.release()
 
     def rp_buzzer(self, time_msec, pattern):
         """
@@ -332,11 +355,15 @@ class TpBoardInterface:
         # いったん、バッファへ受信データ格納
         pos = int((slot - 1) / 2)
         kind = self.__serial_info[pos]['recv_kind']
-        if kind == 'TIME' : # 時間区切り
-            self.__serial_info[pos]['lock'].acquire(1)
-        self.__serial_recv_buf[pos].extend(val)
-        if kind == 'TIME' : # 時間区切り
-            self.__serial_info[pos]['lock'].release()
+        try:
+            if kind == 'TIME' : # 時間区切り
+                self.__serial_info[pos]['lock'].acquire(1)
+            self.__serial_recv_buf[pos].extend(val)
+        except:
+            raise
+        finally:
+            if kind == 'TIME' : # 時間区切り
+                self.__serial_info[pos]['lock'].release()
 
         # 受信方法による振り分け
         if kind == 'CHAR' : # 文字区切り
@@ -516,5 +543,4 @@ if __name__ == '__main__':
 
     from tpConfig import TpConfig
     tp_config = TpConfig()
-    inter = TpBoardInterface(tp_config.get_settings(), '')
-
+    inter = TpBoardInterface('', '')

@@ -26,8 +26,11 @@ module.exports = function (RED) {
 
         // On Node Output
         tc.onOutput(function (msg, payload) {
-
-            msg.payload = payload;
+            try {
+                msg.payload = payload;
+            } catch (e) {
+                msg.payload = null;
+            }
             node.send(msg);
 
         });

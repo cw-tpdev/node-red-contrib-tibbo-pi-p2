@@ -18,7 +18,9 @@ var TpCommon = function (name, node) {
     this._isConnect = false;
 
     // ノードメッセージ
-    this._msg = null;
+    this._msgQueue = [];
+    // Outputsがあるかどうか
+    this._existOutputs = false;
 };
 
 // pyフォルダ
@@ -114,7 +116,10 @@ TpCommon.prototype.onInput = function (func) {
         }
 
         // msgを格納
-        inst._msg = msg;
+        if (inst._existOutputs) {
+            // 出力がある場合のみ
+            inst._msgQueue.push(msg);
+        }
 
         var sendData = func(msg);
 
@@ -168,6 +173,11 @@ TpCommon.prototype.onOutput = function (func) {
     // インスタンス
     var inst = this;
 
+    if (typeof func !== 'undefined') {
+        // 出力あり
+        inst._existOutputs = true;
+    }
+
     // childの標準出力
     this._node.child.stdout.on('data', function (data) {
 
@@ -185,7 +195,7 @@ TpCommon.prototype.onOutput = function (func) {
                 try {
 
                     // msg取得
-                    var msg = inst._msg;
+                    var msg = inst._msgQueue.shift();
                     if (!msg) {
                         // アウトしかない場合は、msgは初期化する。(イベントドリブン)
                         msg = {};

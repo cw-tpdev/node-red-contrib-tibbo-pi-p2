@@ -20,8 +20,11 @@ module.exports = function (RED) {
 
         // On Node Output
         tc.onOutput(function (msg, payload) {
-
-            msg.payload = parseInt(payload);
+            try {
+                msg.payload = parseInt(payload);
+            } catch (e) {
+                msg.payload = null;
+            }
             node.send(msg);
 
         });

@@ -26,10 +26,12 @@ module.exports = function (RED) {
 
         // On Node Output
         tc.onOutput(function (msg, payload) {
-
-            msg.payload = parseFloat(payload);
+            try {
+                msg.payload = parseFloat(payload);
+            } catch (e) {
+                msg.payload = null;
+            }
             node.send(msg);
-
         });
 
     }

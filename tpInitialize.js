@@ -14,6 +14,7 @@ module.exports = function (RED) {
     var nodeName = 'tp-initialize';
 
     // Node-Red起動時に、flows.jsonの中身を確認し、このノードを先頭に移動する(デプロイ時は対応しない)
+    // このノードを複数置いても、タブを無効にしても必ず1回のみ実行される(問題なし)
     moveNodeFromFlowsJson();
 
     function TP_InitializeNode(config) {
@@ -230,77 +231,77 @@ module.exports = function (RED) {
             setPin(slotInfo.pinB, "B");
             setPin(slotInfo.pinC, "C");
             setPin(slotInfo.pinD, "D");
-        } else 
-        // I2Cの情報取得
-        if (comm == 'I2C') {
-            var setteings = {};
-            setNodeSettings(slotInfo, setteings);
-            var pin = [];
-            pin.push({ "name": "A", "status": "SCL" });
-            pin.push({ "name": "B", "status": "SDA" });
         } else
-        // SPIの情報取得
-        if (comm == 'SPI') {
-            var speed = slotInfo.spiSpeed;
-            var mode = slotInfo.spiMode;
-            var endian = slotInfo.spiEndian;
+            // I2Cの情報取得
+            if (comm == 'I2C') {
+                var setteings = {};
+                setNodeSettings(slotInfo, setteings);
+                var pin = [];
+                pin.push({ "name": "A", "status": "SCL" });
+                pin.push({ "name": "B", "status": "SDA" });
+            } else
+                // SPIの情報取得
+                if (comm == 'SPI') {
+                    var speed = slotInfo.spiSpeed;
+                    var mode = slotInfo.spiMode;
+                    var endian = slotInfo.spiEndian;
 
-            var setteings = { "speed": speed, "mode": mode, "endian": endian };
-            setNodeSettings(slotInfo, setteings);
+                    var setteings = { "speed": speed, "mode": mode, "endian": endian };
+                    setNodeSettings(slotInfo, setteings);
 
-            var pin = [];
-            pin.push({ "name": "A", "status": "CS" });
-            pin.push({ "name": "B", "status": "SCLK" });
-            pin.push({ "name": "C", "status": "MOSI" });
-            pin.push({ "name": "D", "status": "MISO" });
-        } else
-        // Serialの情報取得
-        if (comm == 'Serial') {
+                    var pin = [];
+                    pin.push({ "name": "A", "status": "CS" });
+                    pin.push({ "name": "B", "status": "SCLK" });
+                    pin.push({ "name": "C", "status": "MOSI" });
+                    pin.push({ "name": "D", "status": "MISO" });
+                } else
+                    // Serialの情報取得
+                    if (comm == 'Serial') {
 
-            // シリアル設定を取得
-            var serialConf = getNodeFormId(flows, slotInfo.serialConf);
-            var setteings = {};
+                        // シリアル設定を取得
+                        var serialConf = getNodeFormId(flows, slotInfo.serialConf);
+                        var setteings = {};
 
-            if (serialConf) {
-                var hardwareFlow = serialConf.hardwareFlow;
-                var baudRate = serialConf.seriBaudRate;
-                var dataBits = serialConf.seriDataBits;
-                var parity = serialConf.seriParity;
-                var startBits = serialConf.seriStartBits;
-                var stopBits = serialConf.seriStopBits;
-                var splitInput = serialConf.seriSplitInput;
-                var onTheCharactor = serialConf.seriOnTheCharactor;
-                var afterATimeoutOf = serialConf.seriAfterATimeoutOf;
-                var intoFixedLengthOf = serialConf.seriIntoFixedLengthOf;
+                        if (serialConf) {
+                            var hardwareFlow = serialConf.hardwareFlow;
+                            var baudRate = serialConf.seriBaudRate;
+                            var dataBits = serialConf.seriDataBits;
+                            var parity = serialConf.seriParity;
+                            var startBits = serialConf.seriStartBits;
+                            var stopBits = serialConf.seriStopBits;
+                            var splitInput = serialConf.seriSplitInput;
+                            var onTheCharactor = serialConf.seriOnTheCharactor;
+                            var afterATimeoutOf = serialConf.seriAfterATimeoutOf;
+                            var intoFixedLengthOf = serialConf.seriIntoFixedLengthOf;
 
-                var setteings = {
-                    "hardwareFlow": hardwareFlow,
-                    "baudRate": baudRate,
-                    "dataBits": dataBits,
-                    "parity": parity,
-                    "startBits": startBits,
-                    "stopBits": stopBits,
-                    "splitInput": splitInput,
-                    "onTheCharactor": un_escape(onTheCharactor),
-                    "afterATimeoutOf": afterATimeoutOf,
-                    "intoFixedLengthOf": intoFixedLengthOf
-                };
-            }
-            setNodeSettings(slotInfo, setteings);
+                            var setteings = {
+                                "hardwareFlow": hardwareFlow,
+                                "baudRate": baudRate,
+                                "dataBits": dataBits,
+                                "parity": parity,
+                                "startBits": startBits,
+                                "stopBits": stopBits,
+                                "splitInput": splitInput,
+                                "onTheCharactor": un_escape(onTheCharactor),
+                                "afterATimeoutOf": afterATimeoutOf,
+                                "intoFixedLengthOf": intoFixedLengthOf
+                            };
+                        }
+                        setNodeSettings(slotInfo, setteings);
 
-            var pin = [];
-            pin.push({ "name": "A", "status": "TX" });
-            pin.push({ "name": "B", "status": "RX" });
-            if (setteings.hardwareFlow == "on") {
-                pin.push({ "name": "C", "status": "RTS" });
-                pin.push({ "name": "D", "status": "CTS" });
-            }
-        } else {
-            // その他
-            var setteings = {};
-            setNodeSettings(slotInfo, setteings);
-            var pin = [];
-        }
+                        var pin = [];
+                        pin.push({ "name": "A", "status": "TX" });
+                        pin.push({ "name": "B", "status": "RX" });
+                        if (setteings.hardwareFlow == "on") {
+                            pin.push({ "name": "C", "status": "RTS" });
+                            pin.push({ "name": "D", "status": "CTS" });
+                        }
+                    } else {
+                        // その他
+                        var setteings = {};
+                        setNodeSettings(slotInfo, setteings);
+                        var pin = [];
+                    }
 
         // 同じスロットで、ラインに別な設定がないかチェック
         var match = opJson.filter(function (item, index) {
@@ -468,7 +469,20 @@ module.exports = function (RED) {
 
         // tp Initializeの複数ノードチェック
         var initList = flows.filter(function (item, index) {
-            if (nodeName == item['type']) return true;
+
+            if (nodeName == item['type']) {
+                // タブの無効チェック
+                var tabList = flows.filter(function (item2, index) {
+                    if (item["z"] == item2['id']) return true;
+                });
+                if (tabList.length > 0 && tabList[0].disabled) {
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+
+            return false;
         });
         if (initList.length > 1) {
             node.error("err: There are multiple tp initialize.");
@@ -486,6 +500,14 @@ module.exports = function (RED) {
             var slotInfo = sInfoList[i];
             // スロット情報の取得
             var slot = slotInfo.tpSlot;
+
+            // タブが無効かどうかチェック
+            var tabList = flows.filter(function (item, index) {
+                if (slotInfo.z == item['id']) return true;
+            });
+            if (tabList.length > 0 && tabList[0].disabled) {
+                continue;
+            }
 
             if (slot == 'S00') {
                 // TibboPiのボタン、ブザー、LEDの設定

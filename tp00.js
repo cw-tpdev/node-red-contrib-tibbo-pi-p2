@@ -26,11 +26,14 @@ module.exports = function (RED) {
 
         // On Node Output
         tc.onOutput(function (msg, payload) {
-
-            if (config.communication != 'Serial') {
-                msg.payload = JSON.parse(payload);
-            } else {
-                msg.payload = payload;
+            try {
+                if (config.communication != 'Serial') {
+                    msg.payload = JSON.parse(payload);
+                } else {
+                    msg.payload = payload;
+                }
+            } catch (e) {
+                msg.payload = null;
             }
             node.send(msg);
 
@@ -53,11 +56,15 @@ module.exports = function (RED) {
 
         // On Node Output
         tc.onOutput(function (msg, payload) {
-
-            if (config.communication != 'Serial') {
-                msg.payload = JSON.parse(payload);
-            } else {
-                msg.payload = Buffer.from(JSON.parse(payload));
+            
+            try {
+                if (config.communication != 'Serial') {
+                    msg.payload = JSON.parse(payload);
+                } else {
+                    msg.payload = Buffer.from(JSON.parse(payload));
+                }
+            } catch (e) {
+                msg.payload = null;
             }
             node.send(msg);
 
