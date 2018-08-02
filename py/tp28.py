@@ -35,13 +35,13 @@ class Tp28:
         send_data = []
         # Power Down
         send_data.append(
-            {"act": "w", "add": self.i2c_addr, "cmd": 0x00, "v": [0x00]})
+            {"act": "w", "add": self.i2c_addr, "cmd": 0x00, "v": []})
         # Power ON
         send_data.append(
-            {"act": "w", "add": self.i2c_addr, "cmd": 0x00, "v": [0x01]})
+            {"act": "w", "add": self.i2c_addr, "cmd": 0x01, "v": []})
         # Low-Res
         send_data.append(
-            {"act": "w", "add": self.i2c_addr, "cmd": 0x00, "v": [0x13]})
+            {"act": "w", "add": self.i2c_addr, "cmd": 0x13, "v": []})
         self.tp00.send(json.dumps(send_data))
 
         # wait
@@ -63,7 +63,7 @@ class Tp28:
         send_data = []
         # Power Down
         send_data.append(
-            {"act": "w", "add": self.i2c_addr, "cmd": 0x00, "v": [0x00]})
+            {"act": "w", "add": self.i2c_addr, "cmd": 0x00, "v": []})
         self.tp00.send(json.dumps(send_data))
 
         # 小数点第一位まで取得

@@ -31,8 +31,8 @@ class TpEtcInterface:
         """
         #print('tp22_get_temp', slot, pt_kind)
         # reset
-        self.__inter.gpio_write(slot, 'C', '0')
-        self.__inter.gpio_write(slot, 'C', '1')
+        #self.__inter.gpio_write(slot, 'C', '0')
+        #self.__inter.gpio_write(slot, 'C', '1')
 
         # 温度読み込み
         rtd = self.__inter.tp22_temp(slot)
@@ -99,4 +99,3 @@ class TpEtcInterface:
 if __name__ == '__main__':
     inter = TpBoardInterface('', '')
     etc = TpEtcInterface(inter)
-

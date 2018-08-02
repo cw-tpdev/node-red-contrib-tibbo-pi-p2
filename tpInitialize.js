@@ -165,7 +165,7 @@ module.exports = function (RED) {
     }
 
     /* スロット機能 */
-    function readSlotCtrl(flows, slotInfo, opJson, node) {
+    function readSlotCtrl(flows, slotInfo, opJson, node, errOpFlg) {
 
         var baseTCPPort = 14000;
 
@@ -355,14 +355,14 @@ module.exports = function (RED) {
 
                 // ポートを追加
                 if (slotInfo.outputOnly) {
-                    if (match[idx]["portEvent"]) {
+                    if (errOpFlg && match[idx]["portEvent"]) {
                         // 同じポートへの設定はNG
                         node.error("err: There are multiple nodes of the same setting. host:" + host + " slot:" + slot + " comm:" + comm);
                     }
                     // 出力のみ(イベント)
                     match[idx]["portEvent"] = port + 1;
                 } else {
-                    if (match[idx]["port"]) {
+                    if (errOpFlg && match[idx]["port"]) {
                         // 同じポートへの設定はNG
                         node.error("err: There are multiple nodes of the same setting. host:" + host + " slot:" + slot + " comm:" + comm);
                     }
@@ -400,11 +400,35 @@ module.exports = function (RED) {
                 var moreSlot = slotInfo.moreDefaults[i];
 
                 // 通信方式とピンを変更し追加
+                delete tmpSlotInfo.tpSlot;
+                delete tmpSlotInfo.outputOnly;
                 delete tmpSlotInfo.communication;
                 delete tmpSlotInfo.pinA;
                 delete tmpSlotInfo.pinB;
                 delete tmpSlotInfo.pinC;
                 delete tmpSlotInfo.pinD;
+
+                if (moreSlot.tpSlot) {
+                    if (moreSlot.tpSlot.value == 'plus1') {
+                        // スロット2つを使う場合。1を足したスロット番号をセットする
+                        var moreSlotNo = Number(slotInfo.tpSlot.slice(1))
+                        moreSlotNo++;
+                        var newSlot = 'S' + ('00' + moreSlotNo).slice(-2);
+                        tmpSlotInfo.tpSlot = newSlot;
+                    } else {
+                        tmpSlotInfo.tpSlot = moreSlot.tpSlot.value;
+                    }
+                } else {
+                    // Def
+                    tmpSlotInfo.tpSlot = slotInfo.tpSlot;
+                }
+
+                if (moreSlot.outputOnly) {
+                    tmpSlotInfo.outputOnly = moreSlot.outputOnly.value;
+                } else {
+                    // Def
+                    tmpSlotInfo.outputOnly = slotInfo.outputOnly;
+                }
 
                 if (moreSlot.communication) {
                     tmpSlotInfo.communication = moreSlot.communication.value;
@@ -421,7 +445,8 @@ module.exports = function (RED) {
                 if (moreSlot.pinD) {
                     tmpSlotInfo.pinD = moreSlot.pinD.value;
                 }
-                opJson = readSlotCtrl(flows, tmpSlotInfo, opJson, node)
+                // errOpFlgはfalseにして、追加設定なのでエラーは表示しない。
+                opJson = readSlotCtrl(flows, tmpSlotInfo, opJson, node, false)
             }
         }
 
@@ -514,7 +539,7 @@ module.exports = function (RED) {
                 opJson = readTibboPiCtrl(slotInfo, opJson, node);
             } else {
                 // Slotの設定
-                opJson = readSlotCtrl(flows, slotInfo, opJson, node);
+                opJson = readSlotCtrl(flows, slotInfo, opJson, node, true);
             }
         }
 

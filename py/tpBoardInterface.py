@@ -278,6 +278,25 @@ class TpBoardInterface:
             self.__board.i2c_select() # slot選択解除
             self.i2c_lock.release()
 
+    def i2c_block_write(self, slot, address, cmd, vals):
+        """
+        I2Cブロック書き込み、コマンド付き
+        slot    : 'S01' ~ 'S10'
+        address : I2Cアドレス
+        cmd     : コマンド
+        vals    : 書き込みデータ、リスト
+        """
+        slot_num = tpUtils.slot_str_to_int(slot)
+        self.i2c_lock.acquire(1)
+        try:
+            self.__board.i2c_select(slot_num)
+            self.__board.i2c_write_block_data(address, cmd, vals)
+        except:
+            raise
+        finally:
+            self.__board.i2c_select() # slot選択解除
+            self.i2c_lock.release()
+
     def rp_buzzer(self, time_msec, pattern):
         """
         ラズパイブザー鳴動

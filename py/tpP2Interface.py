@@ -12,6 +12,7 @@ try:
     import subprocess
 except:
     gTpEnv = False
+import tpUtils
 
 # 定数宣言 ---------------------------------------------------------------
 SLOT_SETTING_NONE = 0x00
@@ -29,30 +30,6 @@ PIC_RST_CMD = 0xA0
 PIC_WRITE_ADDR = 0x80
 
 # クラス宣言 -------------------------------------------------------------
-class TpLock():
-    """
-        排他処理用クラス
-    """
-
-    def __init__(self, lock_num):
-        """ コンストラクタ
-            指定した個数分のlockを確保する
-        """
-        self.lock = []
-        for i in range(lock_num): self.lock.append(thread.allocate_lock())
-
-    def acquire(self, pos):
-        """ 該当の箇所のlockを取得する 
-            pos : 該当のlockの場所
-        """
-        self.lock[pos].acquire(1)
-
-    def release(self, pos):
-        """ 該当の箇所のlockを解放する 
-            pos : 該当のlockの場所
-        """
-        self.lock[pos].release()
-
 class TpP2Interface():
     global gTpEnv
 
@@ -61,8 +38,9 @@ class TpP2Interface():
         """
         if gTpEnv: # Tibbo-Pi環境（以下全メソッドで同様）
             # 排他処理用設定
-            self.__gpio_lock = TpLock(5)
-            self.__line_lock = TpLock(10)
+            self.__gpio_lock = thread.allocate_lock()
+            self.__line_lock = thread.allocate_lock()
+            self.__subp_lock = thread.allocate_lock()
 
             # ハードウェア設定
             self.__i2c = smbus.SMBus(1)
@@ -105,6 +83,7 @@ class TpP2Interface():
             self.__rp_gpio_init()
             self.i2c_select(0)
             # PIC初期化
+            #print('PIC Initialize!')
             self.__pic_spi_access(PIC_WRITE_ADDR, [PIC_RST_CMD])
 
     def spi_init(self, lock):
@@ -181,18 +160,20 @@ class TpP2Interface():
             for elem in data: c_cmd += ' 0x' + format(elem, '02x')
             #print(c_cmd)
             self.__spi_lock.acquire(1)
+            self.__subp_lock.acquire(1)
             try:
                 c_ret = subprocess.Popen(c_cmd,
                         stdin=subprocess.PIPE,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                         shell=True)
+                c_return = c_ret.wait()
+                ret_bin = c_ret.stdout.readlines()
             except:
                 raise
             finally:
+                self.__subp_lock.release()
                 self.__spi_lock.release()
-            c_return = c_ret.wait()
-            ret_bin = c_ret.stdout.readlines()
             #print(c_return, ret_bin)
             c_return -= 256 if c_return > 127 else c_return
             if c_return != 0:
@@ -202,7 +183,7 @@ class TpP2Interface():
             ret = []
             for elem in ret_str_sep:
                 ret.append(int(elem[2:], 16)) 
-            #print(ret)
+            #print('spi_access', ret)
             return ret
         else:
             return data
@@ -257,7 +238,7 @@ class TpP2Interface():
         lock_pos = int((slot - 1) / 2)
         addr = lock_pos + 0x29
         dmy = [0]
-        self.__gpio_lock.acquire(lock_pos) # 過去データorするため排他開始
+        self.__gpio_lock.acquire(1) # 過去データorするため排他開始
         try:
             old = self.__pic_spi_access(addr, dmy)[0]
             # MSB:S1A,S1B,S1C,S1D,S2A,S2B,S2C,S2D:LSB のようなならび
@@ -266,12 +247,15 @@ class TpP2Interface():
                 bit <<= 4
             dat = old | bit if val == 1 else old & (~(bit))
             addr += PIC_WRITE_ADDR
-            #print('gpio_write', slot, line, val, hex(addr), hex(dat))
+            #print('gpio_write', slot, line, val, hex(addr), hex(dat), hex(old), hex(bit))
+            #err_str = 'gpio_write' + ' ' + str(slot) + ' ' + str(line) + ' ' + str(val) + ' ' + str(hex(addr)) + ' ' + str(hex(dat)) + ' ' + str(hex(old)) + ' ' + str(hex(bit)) + '\r\n'
+            #tpUtils.stderr(err_str)
+
             self.__pic_spi_access(addr, [dat])
         except:
             raise
         finally:
-            self.__gpio_lock.release(lock_pos) # 排他解放
+            self.__gpio_lock.release() # 排他解放
 
     def rp_button_init(self, callback):
         """ 基板ボタン用設定
@@ -305,14 +289,20 @@ class TpP2Interface():
                 str(self.__tb22_kbaud) 
             #print(c_cmd)
 
-            c_ret = subprocess.Popen(c_cmd,
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    shell=True)
+            self.__subp_lock.acquire(1)
+            try:
+                c_ret = subprocess.Popen(c_cmd,
+                        stdin=subprocess.PIPE,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        shell=True)
 
-            c_return = c_ret.wait()
-            ret_bin = c_ret.stdout.readlines()
+                c_return = c_ret.wait()
+                ret_bin = c_ret.stdout.readlines()
+            except:
+                raise
+            finally:
+                self.__subp_lock.release()
             #print(c_return, ret_bin)
             c_return -= 256 if c_return > 127 else c_return
             self.__i2c_end_tp22()
@@ -340,14 +330,20 @@ class TpP2Interface():
                 str(num)
             #print(c_cmd)
 
-            c_ret = subprocess.Popen(c_cmd,
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    shell=True)
+            self.__subp_lock.acquire(1)
+            try:
+                c_ret = subprocess.Popen(c_cmd,
+                        stdin=subprocess.PIPE,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        shell=True)
 
-            c_return = c_ret.wait()
-            ret_bin = c_ret.stdout.readlines()
+                c_return = c_ret.wait()
+                ret_bin = c_ret.stdout.readlines()
+            except:
+                raise
+            finally:
+                self.__subp_lock.release()
             #print(c_return, ret_bin)
             c_return -= 256 if c_return > 127 else c_return
             self.__i2c_end_tp22()
@@ -380,14 +376,20 @@ class TpP2Interface():
             if addr != 0: c_cmd += ' 0x' + format(int(addr), '02x')
             #print(c_cmd)
 
-            c_ret = subprocess.Popen(c_cmd,
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    shell=True)
+            self.__subp_lock.acquire(1)
+            try:
+                c_ret = subprocess.Popen(c_cmd,
+                        stdin=subprocess.PIPE,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        shell=True)
 
-            c_return = c_ret.wait()
-            ret_bin = c_ret.stdout.readlines()
+                c_return = c_ret.wait()
+                ret_bin = c_ret.stdout.readlines()
+            except:
+                raise
+            finally:
+                self.__subp_lock.release()
             #print(c_return, ret_bin)
             c_return -= 256 if c_return > 127 else c_return
             self.__i2c_end_tp22()
@@ -418,6 +420,14 @@ class TpP2Interface():
             dat2    : データ（2byteめ）
         """
         self.__i2c.write_byte_data(address, dat1, dat2)          
+
+    def i2c_write_block_data(self, address, cmd, vals):
+        """ I2C 2byte書き込み
+            address : I2Cアドレス
+            cmd     : コマンド
+            vals    : データリスト
+        """
+        self.__i2c.write_i2c_block_data(address, cmd, vals)
 
     def i2c_select(self, slot=0):
         """ I2C用slot選択
@@ -450,7 +460,14 @@ class TpP2Interface():
                 self.i2c_select(0)
                 break
             except:
-                subprocess.call(self.__path + '/c/end_tp22.sh', shell=True)
+                #print('__i2c_end_tp22 except!')
+                self.__subp_lock.acquire(1)
+                try:
+                    subprocess.call(self.__path + '/c/end_tp22.sh', shell=True)
+                except:
+                    raise
+                finally:
+                    self.__subp_lock.release()
 
     #def serial_event_callback_test(self, pin):
     #    self.__serial_event_callback(pin)
@@ -614,30 +631,40 @@ class TpP2Interface():
         # 現在情報読み込み 
         lock_pos = slot - 1
         addr = lock_pos * 3 + 0x0B
-        self.__line_lock.acquire(lock_pos) # 過去データorするため排他開始
+        self.__line_lock.acquire(1) # 過去データorするため排他開始
         try:
             if line == 1 or line == 2: # A or B
                 dmy = [0]
-                val = self.__pic_spi_access(addr + 1, dmy)
+                old = self.__pic_spi_access(addr + 1, dmy)
+                val = [0]
                 if line == 1: # A 
-                    val[0] = (val[0] & 0x0F) | (kind << 4)
+                    val[0] = (old[0] & 0x0F) | (kind << 4)
                 else: # B
-                    val[0] = (val[0] & 0xF0) | (kind)
+                    val[0] = (old[0] & 0xF0) | (kind)
             else: # C or D
                 dmy = [0, 0]
-                val = self.__pic_spi_access(addr + 1, dmy)
+                old = self.__pic_spi_access(addr + 1, dmy)
+                val = [old[0], 0]
                 if line == 3: # C
-                    val[1] = (val[1] & 0x0F) | (kind << 4)
+                    val[1] = (old[1] & 0x0F) | (kind << 4)
                 else: # D
-                    val[1] = (val[1] & 0xF0) | (kind)
+                    val[1] = (old[1] & 0xF0) | (kind)
             # 現在情報とorして書き込み
             val.insert(0, SLOT_SETTING_NONE)
-            #print(hex(addr), val, kind)
+            #print('__line_set', hex(addr), val, kind, old)
+            """
+            if len(old) == 2:
+                err_str = '__line_set' + ' ' + str(hex(addr)) + ' ' + str(hex(val[0])) + ',' + str(hex(val[1])) + ',' + str(hex(val[2])) + ' ' + str(kind) + ' ' + str(hex(old[0])) + ',' + str(hex(old[1])) + '\r\n'
+            else:
+                err_str = '__line_set' + ' ' + str(hex(addr)) + ' ' + str(hex(val[0])) + ',' + str(hex(val[1])) + ' ' + str(kind) + ' ' + str(hex(old[0])) + '\r\n'
+            tpUtils.stderr(err_str)
+            """
+
             self.__pic_spi_access(PIC_WRITE_ADDR + addr, val)
         except:
             raise
         finally:
-            self.__line_lock.release(lock_pos) # 排他解放
+            self.__line_lock.release() # 排他解放
 
     def __check_gpio_thread(self):
         """ event登録のかわりにloopで処理
@@ -665,4 +692,3 @@ if __name__ == '__main__':
     lock = thread.allocate_lock()
     inter.spi_init(lock)
     inter.board_init()
-

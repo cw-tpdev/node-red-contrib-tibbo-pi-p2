@@ -97,9 +97,9 @@ class TpControl:
                 else:
                     val = None
 
-                # GPIOの処理を行う
-                status = setting['pin'][tpUtils.line_str_to_int(
-                    line) - 1]['status']
+                status = [stg['status'] for stg in setting['pin'] if stg['name'] == line]
+                status = status[0]
+
                 if status == 'IN':
                     read_data = self.tp_inter.gpio_read(setting['slot'], line)
                     # 戻り値
@@ -153,7 +153,8 @@ class TpControl:
                     vals = data['v']
 
                     # I2C 書き込み処理を行う
-                    self.tp_inter.i2c_write(setting['slot'], address, vals)
+                    #self.tp_inter.i2c_write(setting['slot'], address, vals)
+                    self.tp_inter.i2c_block_write(setting['slot'], address, cmd, vals)
 
             # Jsonで返却
             return json.dumps(rtn)
