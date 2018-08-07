@@ -25,6 +25,9 @@ class Tp22:
         self.tcp_client = TcpClient()
         self.tcp_client.connect_by_conf(self.host, self.slot, self.comm)
 
+        # 一度読み込む
+        self.tcp_client.send(json.dumps({"act": "t"}))
+
     def get_data(self):
         """
         データを取得します。

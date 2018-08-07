@@ -31,16 +31,22 @@ class Tp30:
         """
         値を取得します。
         """
+
+        # リトライ処理
+        for _ in range(1, 10):
+
         send_data = []
         send_data.append(
             {"act": "r", "add": self.i2c_addr, "cmd": 0x00, "len": 4})
         _result = self.tp00.send(json.dumps(send_data))
-        time.sleep(0.03)
-        _result = self.tp00.send(json.dumps(send_data))
 
-        # jsonで受け取る
         result_data = json.loads(_result.decode())
         result = result_data[0]
+
+            if result[0] == 127 and result[1] == 255:
+                # 失敗
+                time.sleep(0.03)
+                continue
 
         # データから変換
         humd = ((result[0] & 0x3F) * 256 + result[1]) / 16383 * 100
