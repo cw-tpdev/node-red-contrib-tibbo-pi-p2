@@ -35,13 +35,13 @@ class Tp30:
         # リトライ処理
         for _ in range(1, 10):
 
-        send_data = []
-        send_data.append(
-            {"act": "r", "add": self.i2c_addr, "cmd": 0x00, "len": 4})
-        _result = self.tp00.send(json.dumps(send_data))
+            send_data = []
+            send_data.append(
+                {"act": "r", "add": self.i2c_addr, "cmd": 0x00, "len": 4})
+            _result = self.tp00.send(json.dumps(send_data))
 
-        result_data = json.loads(_result.decode())
-        result = result_data[0]
+            result_data = json.loads(_result.decode())
+            result = result_data[0]
 
             if result[0] == 127 and result[1] == 255:
                 # 失敗
