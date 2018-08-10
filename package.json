@@ -25,7 +25,7 @@
       "tpConfigSerial": "tpConfigSerial.js"
     }
   },
-  "version": "0.9.9",
+  "version": "0.9.10",
   "description": "Node-RED nodes for Tibbo-Pi",
   "main": "tpInitialize.js",
   "scripts": {},

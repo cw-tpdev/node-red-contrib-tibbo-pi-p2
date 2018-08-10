@@ -47,6 +47,8 @@ class Tp30:
                 # 失敗
                 time.sleep(0.03)
                 continue
+            
+            break
 
         # データから変換
         humd = ((result[0] & 0x3F) * 256 + result[1]) / 16383 * 100
